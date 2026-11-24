@@ -1,5 +1,5 @@
-// Ashfall game server: accounts, shared zombies, multiplayer.
-const http=require('http'),fs=require('fs'),path=require('path'),crypto=require('crypto');
+// Ashfall game server: shared zombies, loot and multiplayer. No accounts: players just pick a name.
+const http=require('http'),fs=require('fs'),path=require('path');
 const {WebSocketServer}=require('ws');
 const WS=6400,TAU=Math.PI*2,PORT=process.env.PORT||3000;
 function rng(s){return()=>{s|=0;s=s+0x6D2B79F5|0;let t=Math.imul(s^s>>>15,1|s);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
@@ -95,41 +95,20 @@ function mkZ(z){const r=Math.random(),bg=.06+z*.06,k=r<bg?2:r<bg+.22?1:0,hv=.8+M
  return{kd:0,rs:1,hp:b*hv,sp:s,dm:d}}
 const los=(x1,y1,x2,y2)=>{const d=Math.hypot(x2-x1,y2-y1),n=Math.ceil(d/8);for(let i=1;i<n;i++){const t=i/n;if(inWall(x1+(x2-x1)*t,y1+(y2-y1)*t))return false}return true};
 
-/* storage: Postgres if DATABASE_URL is set, otherwise a local file (lost on redeploy) */
-let pool=null,mem={};
-async function initDB(){
- if(process.env.DATABASE_URL){const{Pool}=require('pg');pool=new Pool({connectionString:process.env.DATABASE_URL,ssl:process.env.PGSSL==='off'?false:{rejectUnauthorized:false}});
-  await pool.query('create table if not exists users(k text primary key,d jsonb)');console.log('Using Postgres')}
- else{console.log('WARNING: no DATABASE_URL set. Accounts are saved to users.json and are lost on redeploy.');try{mem=JSON.parse(fs.readFileSync('users.json','utf8'))}catch(e){}}}
-async function getU(k){if(pool){const r=await pool.query('select d from users where k=$1',[k]);return r.rows[0]?r.rows[0].d:null}return mem[k]||null}
-async function putU(k,d){if(pool)await pool.query('insert into users(k,d) values($1,$2) on conflict(k) do update set d=$2',[k,JSON.stringify(d)]);else{mem[k]=d;try{fs.writeFileSync('users.json',JSON.stringify(mem))}catch(e){}}}
-
-/* accounts */
-const hashPw=(pw,salt)=>crypto.scryptSync(pw,salt,32).toString('hex'),sha=s=>crypto.createHash('sha256').update(s).digest('hex');
-const ukey=n=>n.toLowerCase().replace(/[^a-z0-9_-]/g,''),cl=v=>Math.max(12,Math.min(WS-12,+v||0));
+const cl=v=>Math.max(12,Math.min(WS-12,+v||0));
 const P=new Map();let nid=1,zid=1,zs=[],bullets=[],spT=0;
 const send=(o,m)=>{if(o.ws.readyState===1)o.ws.send(JSON.stringify(m))};
-function login(o,k,d,tok,r){for(const q of P.values())if(q!==o&&q.u===k)try{q.ws.close()}catch(e){}
- o.u=k;o.d=d;o.name=d.name;send(o,{t:'authok',prof:{name:d.name,kills:d.kills,deaths:d.deaths,best:d.best},tok,r})}
-function endLife(o){if(!o.d||!o.life)return;o.life=false;o.d.kills+=o.k;o.d.deaths+=o.hp<=0?1:0;o.d.best=Math.max(o.d.best,Math.round((Date.now()-o.t0)/1000));putU(o.u,o.d).catch(()=>{})}
+function endLife(o){o.life=false}
 function die(o){o.alive=false;o.hp=0;endLife(o);send(o,{t:'dead'})}
 function hurt(z,d,o){z.hp-=d;z.hit=.1;z.ag=1;z.lost=0;z.lx=o.x;z.ly=o.y;if(z.hp<=0&&!z.dead){z.dead=1;o.k++}}
 function noise(x,y){for(const z of zs)if(Math.hypot(z.x-x,z.y-y)<340&&!z.los){z.ag=1;z.lost=-2;z.lx=x;z.ly=y}}
 
 async function handle(o,m){
- if(m.t==='auth'){const name=String(m.u||'').trim().slice(0,14),k=ukey(name),pw=String(m.pw||'');
-  if(k.length<3)return send(o,{t:'autherr',m:'Username needs 3 or more letters or numbers.'});
-  if(pw.length<4)return send(o,{t:'autherr',m:'Password needs 4 or more characters.'});
-  let d=await getU(k);
-  if(m.m==='signup'){if(d)return send(o,{t:'autherr',m:'That username is taken.'});const salt=crypto.randomBytes(16).toString('hex');d={name,salt,hash:hashPw(pw,salt),kills:0,deaths:0,best:0}}
-  else{if(!d)return send(o,{t:'autherr',m:'No such user. Try Sign up.'});if(hashPw(pw,d.salt)!==d.hash)return send(o,{t:'autherr',m:'Wrong password.'})}
-  const tok=crypto.randomBytes(16).toString('hex');d.tok=sha(tok);await putU(k,d);return login(o,k,d,tok,false)}
- if(m.t==='resume'){const k=ukey(String(m.u||'')),d=await getU(k);
-  if(!d||!d.tok||sha(String(m.tok||''))!==d.tok)return send(o,{t:'autherr',m:'',r:1});return login(o,k,d,null,true)}
+ if(m.t==='join'){o.name=String(m.name||'').replace(/[<>&"]/g,'').trim().slice(0,14)||'Survivor';o.skin=Math.max(0,Math.min(7,m.skin|0));o.u=true;return}
  if(!o.u)return;
  if(m.t==='spawn'){endLife(o);o.alive=true;o.life=true;o.hp=100;o.k=0;o.x=cl(m.x);o.y=cl(m.y);o.rev=0;o.t0=Date.now();return}
  if(!o.alive)return;
- if(m.t==='pos'){o.x=cl(m.x);o.y=cl(m.y);o.a=+m.a||0;o.w=Math.max(0,Math.min(18,m.w|0));o.c=Math.max(0,Math.min(5,m.c|0))}
+ if(m.t==='pos'){o.x=cl(m.x);o.y=cl(m.y);o.a=+m.a||0;o.w=Math.max(0,Math.min(18,m.w|0));o.c=o.skin|0}
  else if(m.t==='heal'){o.hp=Math.min(100,o.hp+Math.max(0,Math.min(100,+m.a||0)))}
  else if(m.t==='search'){const c=CR[m.id|0];if(!c||c.open||Math.hypot(o.x-c.x,o.y-c.y)>90)return;c.open=true;c.rt=180;OPEN.add(c);RARE.delete(c);
   const lb=c.b.lb||0,items=c.rare?[rareItem(),rollItem(c.b.z,lb)]:Math.random()<.35?[rollItem(c.b.z,lb),rollItem(c.b.z,lb)]:[rollItem(c.b.z,lb)];
@@ -186,4 +165,4 @@ wss.on('connection',ws=>{const o={ws,id:nid++,u:null,alive:false,life:false,x:0,
  ws.on('message',async raw=>{let m;try{m=JSON.parse(raw)}catch(e){return}try{await handle(o,m)}catch(e){console.error(e)}});
  ws.on('close',()=>{endLife(o);P.delete(o.id)});ws.on('error',()=>{})});
 setInterval(tick,50);
-initDB().then(()=>server.listen(PORT,()=>console.log('Ashfall server on port '+PORT))).catch(e=>{console.error(e);process.exit(1)});
+server.listen(PORT,()=>console.log('Ashfall server on port '+PORT));
