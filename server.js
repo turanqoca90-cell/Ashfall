@@ -152,7 +152,7 @@ function mineBlast(x,y,own){WD=++wdc;for(const q of zs){if(q.dead)continue;const
 function noise(x,y){for(const z of zs)if(Math.hypot(z.x-x,z.y-y)<340&&!z.los&&!(z.kd===7&&!z.wk)){z.ag=1;z.lost=-2;z.lx=x;z.ly=y}}
 
 async function handle(o,m){
- if(m.t==='join'){o.name=String(m.name||'').replace(/[<>&"]/g,'').trim().slice(0,14)||'Survivor';o.skin=Math.max(0,Math.min(23,m.skin|0));o.u=true;if(DW.size)send(o,{t:'wl',d:[...DW.keys()]});return}
+ if(m.t==='join'){o.name=String(m.name||'').replace(/[<>&"]/g,'').trim().slice(0,14)||'Survivor';o.skin=Math.max(0,Math.min(24,m.skin|0));o.u=true;if(DW.size)send(o,{t:'wl',d:[...DW.keys()]});return}
  if(!o.u)return;
  if(m.t==='spawn'){endLife(o);o.alive=true;o.life=true;o.hp=100;o.k=0;o.x=cl(m.x);o.y=cl(m.y);o.rev=0;o.rage=0;o.weak=0;o.t0=Date.now();return}
  if(!o.alive)return;
