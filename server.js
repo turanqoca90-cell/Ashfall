@@ -88,7 +88,7 @@ function rollItem(z,lb){let r=Math.random()*100,s=5;const wt=WT[z];for(let i=0;i
  if(s===3&&Math.random()<.22)return{k:'g',s:3,i:0};
  if(s===4&&Math.random()<.25)return{k:'p',s:4,i:Math.random()<.5?0:1};
  if(s===5&&Math.random()<.2)return{k:'g',s:5,i:1};
- let k=Math.random()<.75?'w':'h';if(k==='h'&&(s===1||s===4))k='w';return k==='w'?{k,s,i:WBS[s][Math.random()*WBS[s].length|0]}:{k,s}}
+ let k=Math.random()<.75?'w':'h';if(k==='h'&&(s===1||s===4))k='w';return k==='w'?{k,s,i:WBS[s][Math.random()*WBS[s].length|0]}:{k,s,i:0}}
 function rareItem(){const s=Math.random()<.65?4:5;return{k:'w',s,i:WBS[s][Math.random()*WBS[s].length|0]}}
 const kc=k=>k==='w'?0:k==='g'?2:k==='p'?3:1;
 const scap=m=>m.k==='g'?(m.i===1?1:3):m.k==='p'?2:m.k==='h'?(m.s===2?4:m.s===3?3:2):1;
@@ -114,11 +114,11 @@ function stepDir(z,tx,ty){const f=getField(tx,ty);if(!f)return null;const cx=Mat
   if(DX[k]&&DY[k]&&(f.d[cy*FW+nx]<0||f.d[ny*FW+cx]<0))continue;if(d<best){best=d;bx=nx;by=ny}}
  if(best===1e9)return null;return[(f.ox+bx+.5)*CS-z.x,(f.oy+by+.5)*CS-z.y]}
 function mkZ(z){const r=Math.random(),bg=.06+z*.06,ex=.03+z*.025,sc=.03+z*.02,k=r<bg?2:r<bg+ex?4:r<bg+ex+sc?3:r<bg+ex+sc+.22?1:0,hv=.8+Math.random()*.45,b=28+z*24,s=(46+z*12+Math.random()*14)*1.15,d=6+z*3;
+ if(z===3&&Math.random()<.25)return{kd:7,rs:.9,hp:b*hv,sp:s,dm:d};
  if(k===1)return{kd:1,rs:1,hp:b*.7*hv,sp:s*1.5,dm:d};
  if(k===2)return{kd:2,rs:1.3,hp:b*2*hv,sp:s,dm:d*1.3};
  if(k===3)return{kd:3,rs:1,hp:b*.65*hv,sp:s*.85,dm:d*.6,sd:7+z*4};
  if(k===4)return{kd:4,rs:1.1,hp:b*.8*hv,sp:s*1.15,dm:0};
- if(z===3&&Math.random()<.13)return{kd:7,rs:.9,hp:b*hv,sp:s,dm:d};
  if(z===2)return{kd:5,rs:1,hp:b*hv,sp:s,dm:d};
  if(z===4)return{kd:6,rs:1,hp:b*hv,sp:s*1.15,dm:d};
  return{kd:0,rs:1,hp:b*hv,sp:s,dm:d}}
@@ -128,7 +128,7 @@ const cl=v=>Math.max(12,Math.min(WS-12,+v||0));
 const P=new Map();let nid=1,zid=1,zs=[],bullets=[],spT=0,spits=[],sid=1,evs=[],rst=1,nades=[],nid2=1;
 const send=(o,m)=>{if(o.ws.readyState===1)o.ws.send(JSON.stringify(m))};
 function endLife(o){o.life=false}
-function die(o){o.alive=false;o.hp=0;endLife(o);send(o,{t:'dead'})}
+function die(o){W.tags.delete(o.id);o.alive=false;o.hp=0;endLife(o);send(o,{t:'dead'})}
 function hurt(z,d,o){if(z.bs){wormHurt(z,d,o);return}z.hp-=d;z.hit=.1;z.ag=1;if(z.kd===7)z.wk=1;z.lost=0;z.lx=o.x;z.ly=o.y;if(z.hp<=0&&!z.dead){z.dead=1;o.k++}}
 const bcast=m=>{for(const o of P.values())if(o.u)send(o,m)};
 const EXR=125,EXW=100;
@@ -154,7 +154,7 @@ function noise(x,y){for(const z of zs)if(Math.hypot(z.x-x,z.y-y)<340&&!z.los&&!(
 async function handle(o,m){
  if(m.t==='join'){o.name=String(m.name||'').replace(/[<>&"]/g,'').trim().slice(0,14)||'Survivor';o.skin=Math.max(0,Math.min(24,m.skin|0));o.u=true;if(DW.size)send(o,{t:'wl',d:[...DW.keys()]});return}
  if(!o.u)return;
- if(m.t==='spawn'){endLife(o);o.alive=true;o.life=true;o.hp=100;o.k=0;o.x=cl(m.x);o.y=cl(m.y);o.rev=0;o.rage=0;o.weak=0;o.t0=Date.now();return}
+ if(m.t==='spawn'){endLife(o);W.tags.delete(o.id);o.alive=true;o.life=true;o.hp=100;o.k=0;o.x=cl(m.x);o.y=cl(m.y);o.rev=0;o.rage=0;o.weak=0;o.t0=Date.now();return}
  if(!o.alive)return;
  if(m.t==='pos'){o.x=cl(m.x);o.y=cl(m.y);o.a=+m.a||0;o.w=Math.max(0,Math.min(20,m.w|0));o.c=o.skin|0}
  else if(m.t==='buff'){if(m.k==='rage')o.rage=Date.now()+30000}
@@ -166,9 +166,9 @@ async function handle(o,m){
   const lb=c.b.lb||0,items=c.rare?[rareItem(),rollItem(c.b.z,lb)]:Math.random()<.35?[rollItem(c.b.z,lb),rollItem(c.b.z,lb)]:[rollItem(c.b.z,lb)];
   const ng=[];for(const it of items){const g={id:gid++,x:c.x+(Math.random()-.5)*36,y:c.y+10+Math.random()*20,ttl:30,hold:0,k:it.k,s:it.s,i:it.i};GI.push(g);ng.push([g.id,Math.round(g.x),Math.round(g.y),kc(g.k),g.s,g.i||0,0,30])}
   send(o,{t:'gi',g:ng})}
- else if(m.t==='pick'){const i=GI.findIndex(g=>g.id===m.id);if(i<0)return;const g=GI[i];if(g.hold===o.id||Math.hypot(o.x-g.x,o.y-g.y)>45)return;GI.splice(i,1);send(o,{t:'got',it:{k:g.k,s:g.s,i:g.i,n:g.n||1}})}
- else if(m.t==='altar'){if(o.alive&&W.st==='idle'&&!W.dead&&Date.now()>=W.cdUntil&&Math.hypot(o.x-ALT.x,o.y-ALT.y)<130)wormStart()}
- else if(m.t==='swap'){const i=GI.findIndex(g=>g.id===m.id);if(i<0||!validItem(m.give))return;const g=GI[i];if(g.hold===o.id||Math.hypot(o.x-g.x,o.y-g.y)>45)return;GI.splice(i,1);GI.push({id:gid++,x:g.x,y:g.y,k:m.give.k,s:m.give.s,i:m.give.i,n:snn(m.give),ttl:30,hold:o.id});send(o,{t:'got',it:{k:g.k,s:g.s,i:g.i,n:g.n||1},sw:1})}
+ else if(m.t==='pick'){const i=GI.findIndex(g=>g.id===m.id);if(i<0)return;const g=GI[i];if(g.hold===o.id||Math.hypot(o.x-g.x,o.y-g.y)>45)return;GI.splice(i,1);send(o,{t:'got',it:{k:g.k,s:g.s,i:g.i||0,n:g.n||1}})}
+ else if(m.t==='altar'){if(o.alive&&W.st==='idle'&&Date.now()>=W.cdUntil&&Math.hypot(o.x-ALT.x,o.y-ALT.y)<130)wormStart()}
+ else if(m.t==='swap'){const i=GI.findIndex(g=>g.id===m.id);if(i<0||!validItem(m.give))return;const g=GI[i];if(g.hold===o.id||Math.hypot(o.x-g.x,o.y-g.y)>45)return;GI.splice(i,1);GI.push({id:gid++,x:g.x,y:g.y,k:m.give.k,s:m.give.s,i:m.give.i,n:snn(m.give),ttl:30,hold:o.id});send(o,{t:'got',it:{k:g.k,s:g.s,i:g.i||0,n:g.n||1},sw:1})}
  else if(m.t==='drop'){if(!validItem(m)||GI.length>400)return;GI.push({id:gid++,x:o.x+Math.cos(o.a)*26,y:o.y+Math.sin(o.a)*26,k:m.k,s:m.s,i:m.i,n:snn(m),ttl:30,hold:o.id})}
  else if(m.t==='fire'){const w=WP[m.w|0];if(!w||typeof m.a!=='number')return;const now=Date.now();if(now-o.lf<(w.ramp?w.ramp[1]:w.rate)*700)return;
   o.lf=now;if(typeof m.x==='number'&&typeof m.y==='number'&&Math.hypot(m.x-o.x,m.y-o.y)<120){o.x=cl(m.x);o.y=cl(m.y)}o.f++;o.fa=m.a;o.w=m.w|0;o.rev=1.5;
@@ -212,6 +212,7 @@ function tick(){const dt=.05,al=[...P.values()].filter(o=>o.alive);
   if(z.kd===3){z.sc-=dt;if(z.los&&z.sc<=0&&td<420){z.sc=1.6+Math.random()*.6;const a=Math.atan2(z.los.y-z.y,z.los.x-z.x);spits.push({id:sid++,x:z.x+Math.cos(a)*16,y:z.y+Math.sin(a)*16,vx:Math.cos(a)*300,vy:Math.sin(a)*300,l:1.5,d:z.sd})}}
   z.cd-=dt;if(z.dm>0&&td<26*z.rs&&z.cd<=0){z.cd=.8;tp.hp-=z.dm;if(z.kd===5){tp.weak=Date.now()+2000;send(tp,{t:'deb',k:'weak'})}else if(z.kd===6)send(tp,{t:'deb',k:'slow'});if(tp.hp<=0)die(tp)}}
  const pl=al.map(o=>[o.id,o.name,Math.round(o.x),Math.round(o.y),+o.a.toFixed(2),o.w,o.c,o.f,+(o.fa||0).toFixed(2),Math.round(o.hp)]);
+ const bt=W.st==='idle'?[]:[...W.tags].filter(id=>{const q=P.get(id);return q&&q.alive});
  for(const o of P.values()){if(!o.u)continue;const z=[],gi=[],cs=[];
   if(o.alive){for(const g of GI)if(Math.abs(g.x-o.x)<750&&Math.abs(g.y-o.y)<750)gi.push([g.id,Math.round(g.x),Math.round(g.y),kc(g.k),g.s,g.i||0,g.hold===o.id?1:0,Math.ceil(g.ttl),g.n||1]);
    for(const c of OPEN)if(Math.abs(c.x-o.x)<850&&Math.abs(c.y-o.y)<850)cs.push([c.id,1]);for(const c of RARE)if(Math.abs(c.x-o.x)<850&&Math.abs(c.y-o.y)<850)cs.push([c.id,2])}
@@ -219,14 +220,14 @@ function tick(){const dt=.05,al=[...P.values()].filter(o=>o.alive);
   const sp=[];for(const q of spits)if(Math.abs(q.x-o.x)<850&&Math.abs(q.y-o.y)<850)sp.push([q.id,Math.round(q.x),Math.round(q.y)]);
   const ex=evs.filter(e=>Math.abs(e[0]-o.x)<1300&&Math.abs(e[1]-o.y)<1300);
   const ng=[];for(const g of nades)if(Math.abs(g.x-o.x)<850&&Math.abs(g.y-o.y)<850)ng.push([g.id,Math.round(g.x),Math.round(g.y),g.tl>0?0:1,Math.max(0,Math.round(g.fz*10)),g.cid,g.oid===o.id?1:0,g.ty||0]);
-  send(o,{t:'s',i:o.id,me:{hp:Math.round(o.hp),k:o.k},p:pl,z,gi,c:cs,sp,ex,ng,ad:W.dead?1:0,bs:W.st==='idle'?0:[W.st==='sum'?1:2,Math.round(W.hp),W.mh,Math.round(W.hole.x),Math.round(W.hole.y),W.hole.r,+W.hole.a.toFixed(2)]})}evs.length=0}
+  send(o,{t:'s',i:o.id,me:{hp:Math.round(o.hp),k:o.k},p:pl,z,gi,c:cs,sp,ex,ng,ad:0,bt:bt,bs:W.st==='idle'?0:[W.st==='sum'?1:2,Math.round(W.hp),W.mh,Math.round(W.hole.x),Math.round(W.hole.y),W.hole.r,+W.hole.a.toFixed(2)]})}evs.length=0}
 
 
 let WD=0,wdc=0,WBK=null;
-const W={st:'idle',hp:0,mh:3000,t:0,el:0,wt:0,hole:{x:0,y:0,r:80,a:0},path:[],hx:0,hy:0,a:0,seg:[],ld:0,vis:0,idle:0,cdUntil:0,dead:0};
+const W={st:'idle',hp:0,mh:3000,t:0,el:0,wt:0,hole:{x:0,y:0,r:80,a:0},path:[],hx:0,hy:0,a:0,seg:[],ld:0,vis:0,idle:0,cdUntil:0,dead:0,tags:new Set()};
 const WNB=14,WSP=34,WBR=k=>1.25*(k===0?2:1.8-.7*(k-1)/(WNB-1));
-function wormReset(){zs=zs.filter(z=>!z.bs);W.st='idle';W.vis=0;W.seg=[];W.hole.a=0}
-function wormStart(){wormReset();W.hp=W.mh=Math.round(3000*(1+.5*(Math.max(1,[...P.values()].filter(o=>o.alive).length)-1)));W.st='sum';W.t=3;
+function wormReset(){W.tags.clear();zs=zs.filter(z=>!z.bs);W.st='idle';W.vis=0;W.seg=[];W.hole.a=0}
+function wormStart(){wormReset();for(const o of P.values())if(o.alive)W.tags.add(o.id);W.hp=W.mh=Math.round(3000*(1+.5*(Math.max(1,[...P.values()].filter(o=>o.alive).length)-1)));W.st='sum';W.t=3;
  for(let k=WNB;k>=0;k--){const z={id:zid++,x:-9999,y:-9999,hp:500,mh:500,sp:0,dm:0,sd:0,kd:k?10:9,rs:WBR(k),fz:0,sc:1,cd:0,a:0,ag:0,wt:0,wa:0,lost:0,lx:0,ly:0,lt:0,los:null,hit:0,pt:0,dir:true,bs:1};zs.push(z);W.seg[k]=z}
  bcast({t:'bm',k:'spawn'})}
 function wormHole(first){const al=[...P.values()].filter(o=>o.alive);let x=ALT.x,y=ALT.y;
@@ -240,14 +241,14 @@ function wormPlace(sc){for(let k=0;k<=WNB;k++){const want=k*WSP;let x=W.hx,y=W.h
   const z=W.seg[k],pv=k?W.seg[k-1]:null;z.a=k?(Math.hypot(pv.x-x,pv.y-y)>1?Math.atan2(pv.y-y,pv.x-x):z.a):W.a;z.x=x;z.y=y;z.rs=WBR(k)*sc;z.hp=W.hp;z.mh=W.mh;z.dead=0}}
 function wormHurt(z,d,o){if(!W.vis||W.hp<=0)return;if(WBK){if(WBK.wh)return;WBK.wh=1}z.hit=.1;if(WD){if(W.ld===WD){if(d<=W.ldm)return;W.hp-=d-W.ldm;W.ldm=d}else{W.ld=WD;W.ldm=d;W.hp-=d}}else W.hp-=d;if(W.hp<=0)wormDie(o)}
 function wormDie(o){const x=W.hx,y=W.hy;if(o&&o.k!==undefined)o.k++;for(let k=0;k<=WNB;k+=3)evs.push([Math.round(W.seg[k].x),Math.round(W.seg[k].y)]);
- evs.push([Math.round(ALT.x),Math.round(ALT.y),220],[Math.round(ALT.x+60),Math.round(ALT.y-40),120],[Math.round(ALT.x-50),Math.round(ALT.y+50),120]);
  GI.push({id:gid++,x:ALT.x,y:ALT.y,k:'w',s:6,i:20,n:1,ttl:600,hold:0},{id:gid++,x:ALT.x+34,y:ALT.y,k:'h',s:5,i:0,n:1,ttl:600,hold:0});
- wormReset();W.dead=1;bcast({t:'bm',k:'dead'})}
+ wormReset();W.cdUntil=Date.now()+90000;bcast({t:'bm',k:'dead'})}
 function wormTick(dt){
  for(const z of W.seg)if(z&&z.hit>0)z.hit-=dt;
  if(W.st==='idle')return;
  const al=[...P.values()].filter(o=>o.alive);
- if(!al.length){W.idle+=dt;if(W.idle>15)wormReset();return}W.idle=0;
+ let tg=0;for(const o of al)if(W.tags.has(o.id))tg++;
+ if(!tg){wormReset();W.cdUntil=Date.now()+30000;bcast({t:'bm',k:'burrow'});return}
  for(const o of al)o.wcd=(o.wcd||0)-dt;
  if(W.st==='sum'){W.t-=dt;if(W.t<=0)wormHole(true);return}
  if(W.st==='tele'){W.t-=dt;W.hole.a=Math.min(1,1-W.t/1.6);if(W.t<=0)wormEmerge();return}
@@ -273,11 +274,12 @@ const BOOT=Date.now().toString(36);
 process.on('uncaughtException',e=>console.error('uncaught',e));process.on('unhandledRejection',e=>console.error('unhandled',e));
 const server=http.createServer((req,res)=>{
  if(req.url==='/status'){let a=0;for(const o of P.values())if(o.alive)a++;res.writeHead(200,{'Content-Type':'application/json','Cache-Control':'no-store'});res.end(JSON.stringify({server:BOOT,uptimeSec:Math.round(process.uptime()),connected:P.size,alive:a,zombies:zs.length,memMB:Math.round(process.memoryUsage().rss/1048576)}));return}
+ if(req.url==='/face.webp'){try{const b=fs.readFileSync(path.join(__dirname,'face.webp'));res.writeHead(200,{'Content-Type':'image/webp','Cache-Control':'public, max-age=3600'});res.end(b)}catch(e){res.writeHead(404);res.end('Not found')}return}
  if(req.url==='/'||req.url.startsWith('/?')||req.url==='/index.html'){res.writeHead(200,{'Content-Type':'text/html; charset=utf-8'});res.end(fs.readFileSync(path.join(__dirname,'index.html')))}
  else{res.writeHead(404);res.end('Not found')}});
 const wss=new WebSocketServer({server});
 wss.on('connection',ws=>{const o={ws,id:nid++,u:null,alive:false,life:false,x:0,y:0,a:0,w:0,c:0,f:0,fa:0,hp:100,k:0,hid:false,rev:0,lf:0,t0:0};P.set(o.id,o);
  ws.on('message',async raw=>{let m;try{m=JSON.parse(raw)}catch(e){return}try{await handle(o,m)}catch(e){console.error(e)}});
- ws.on('close',()=>{endLife(o);P.delete(o.id)});ws.on('error',()=>{})});
+ ws.on('close',()=>{W.tags.delete(o.id);endLife(o);P.delete(o.id)});ws.on('error',()=>{})});
 setInterval(()=>{try{tick()}catch(e){console.error('tick error',e)}},50);
 server.listen(PORT,()=>console.log('Ashfall server on port '+PORT));
