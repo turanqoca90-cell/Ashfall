@@ -6,7 +6,7 @@ function rng(s){return()=>{s|=0;s=s+0x6D2B79F5|0;let t=Math.imul(s^s>>>15,1|s);t
 /* four regions: 1 grasslands (top left, spawn), 2 desert (top right), 3 dense forest (bottom left), 4 snow land (bottom right) */
 const zoneAt=(x,y)=>x<WS/2?(y<WS/2?1:3):(y<WS/2?2:4);
 const ZN=['','Outskirts','Midlands','The Core'],RF=['#7a5c4a','#5f6b73','#6b5d78','#8a7a55','#4f6a5a'];
-const WP=[{nm:'Fists',st:0,me:1,d:10,rate:.5,rg:44,arc:.9},{nm:'Pistol',st:1,d:22,rate:.4,pel:1,spr:.04,rg:480},{nm:'SMG',st:2,d:13,rate:.11,pel:1,spr:.14,rg:420},{nm:'Shotgun',st:3,d:16,rate:.75,pel:8,spr:.09,gs:1,fo:1,pi:50,rg:300},{nm:'Rifle',st:4,d:42,rate:.36,pel:1,spr:.02,rg:640,sp:1250},{nm:'Plasma gun',st:5,d:28,rate:.07,pel:1,spr:.06,rg:560},{nm:'Crowbar',st:1,me:1,d:22,rate:.55,rg:58,arc:1},{nm:'Sword',st:2,me:1,d:34,rate:.45,rg:80,arc:1.4},{nm:'SCAR',st:3,d:21,rate:.14,pel:1,spr:.05,rg:520,sp:900},{nm:'Handcannon',st:4,d:90,rate:.75,pel:1,spr:.015,fo:1,pn:1,rg:600,sp:1500},{nm:'Minigun',st:5,d:20,rate:.24,ramp:[.24,.04,2.5],pel:1,spr:.13,rg:520,sp:800},{nm:'Fire Axe',st:3,me:1,d:55,rate:.7,rg:76,arc:1.3},{nm:'Katana',st:4,me:1,d:40,rate:.3,rg:94,arc:1.1},{nm:'Chainsaw',st:5,me:1,lo:1,d:14,rate:.07,rg:68,arc:1},{nm:'Revolver',st:1,d:34,rate:.5,pel:1,spr:.03,rg:500,sp:800},{nm:'Carbine',st:2,d:18,rate:.2,pel:1,spr:.04,rg:520,sp:850},{nm:'Crossbow',st:3,d:75,rate:.9,pel:1,spr:.01,pn:2,pf:.7,rg:650,sp:1100},{nm:'Sniper',st:4,d:115,rate:1.05,pel:1,spr:.004,pn:3,rg:1000,sp:3400},{nm:'Laser Cannon',st:5,beam:1,d:55,rate:.55,pel:1,rg:1000},{nm:'MP40',st:4,d:15,rate:.085,pel:1,spr:.06,rg:460,sp:950},{nm:'Wyrmfang',st:6,d:48,rate:.16,pel:3,spr:.07,pn:3,pf:.85,rg:720,sp:1300},{nm:'Flamethrower',st:5,d:10,rate:.05,pel:1,spr:.32,pn:9,pf:.92,rg:200,sp:520},{nm:'Baseball Bat',st:1,me:1,d:20,rate:.5,rg:62,arc:1.1},{nm:'Hunting Bow',st:2,d:32,rate:.55,pel:1,spr:.01,pn:1,pf:.8,rg:560,sp:1000}];
+const WP=[{nm:'Fists',st:0,me:1,d:10,rate:.5,rg:44,arc:.9},{nm:'Pistol',st:1,d:22,rate:.4,pel:1,spr:.04,rg:480},{nm:'SMG',st:2,d:13,rate:.11,pel:1,spr:.14,rg:420},{nm:'Shotgun',st:3,d:16,rate:.75,pel:8,spr:.09,gs:1,fo:1,pi:50,rg:300},{nm:'Rifle',st:4,d:42,rate:.36,pel:1,spr:.02,rg:640,sp:1250},{nm:'Plasma gun',st:5,d:28,rate:.07,pel:1,spr:.06,rg:560},{nm:'Crowbar',st:1,me:1,d:22,rate:.55,rg:58,arc:1},{nm:'Sword',st:2,me:1,d:34,rate:.45,rg:80,arc:1.4},{nm:'SCAR',st:3,d:21,rate:.14,pel:1,spr:.05,rg:520,sp:900},{nm:'Handcannon',st:4,d:90,rate:.75,pel:1,spr:.015,fo:1,pn:1,rg:600,sp:1500},{nm:'Minigun',st:5,d:20,rate:.24,ramp:[.24,.04,2.5],pel:1,spr:.13,rg:520,sp:800},{nm:'Fire Axe',st:3,me:1,d:55,rate:.7,rg:76,arc:1.3},{nm:'Katana',st:4,me:1,d:40,rate:.3,rg:94,arc:1.1},{nm:'Chainsaw',st:5,me:1,lo:1,d:14,rate:.07,rg:68,arc:1},{nm:'Revolver',st:1,d:34,rate:.5,pel:1,spr:.03,rg:500,sp:800},{nm:'Carbine',st:2,d:18,rate:.2,pel:1,spr:.04,rg:520,sp:850},{nm:'Crossbow',st:3,d:75,rate:.9,pel:1,spr:.01,pn:2,pf:.7,rg:650,sp:1100},{nm:'Sniper',st:4,d:115,rate:1.05,pel:1,spr:.004,pn:3,rg:1000,sp:3400},{nm:'Laser Cannon',st:5,beam:1,d:55,rate:.55,pel:1,rg:1000},{nm:'MP40',st:4,d:15,rate:.085,pel:1,spr:.06,rg:460,sp:950},{nm:'Wyrmfang',st:6,d:48,rate:.16,pel:3,spr:.07,pn:3,pf:.85,rg:720,sp:1300},{nm:'Flamethrower',st:5,d:10,rate:.05,pel:1,spr:.32,pn:9,pf:.92,rg:200,sp:520},{nm:'Baseball Bat',st:1,me:1,d:20,rate:.5,rg:62,arc:1.1},{nm:'Hunting Bow',st:2,d:32,rate:.55,pel:1,spr:.01,pn:1,pf:.8,rg:560,sp:1000},{nm:'Nurlan dur Tullan',st:6,d:34,rate:.9,pel:12,spr:.16,gs:1,fo:1,rg:330,sp:850,nd:1}];
 const WBS=[null,[1,6,14,22],[2,7,15,23],[3,8,11,16],[4,9,12,17,19],[5,10,13,18,21],[20]];
 const sprd=w=>{if(w.gs){let u=0;while(!u)u=Math.random();return Math.max(-.3,Math.min(.3,Math.sqrt(-2*Math.log(u))*Math.cos(TAU*Math.random())*w.spr))}return(Math.random()-.5)*w.spr*2};
 const HL=['','Bandage','Painkillers','Medkit','Trauma kit','Surgery kit'],WT=[0,[60,30,9,1,0],[22,38,26,12,2],[4,16,32,32,16],[0,6,24,38,32]];
@@ -310,9 +310,16 @@ function hunterTick(dt,al){for(const h of HT){const z=h.z;
    z.fz carries his pose to the client: 0 walk, 1 dash wind-up, 2 dashing, 3 spin wind-up, 4 spinning, 5 spitting.
    States: walk, dwind, dash, swind, spin, spit. DZ = spit danger circles. Leash 900 px around the shrine. 120 s cooldown after death (key is refunded if used early). */
 const NB={st:'idle',t:0,z:null,cdUntil:0,lt:0,away:0,cc:0,tg:null,dir:0,hit:null,sk:0},DZ=[];
-function nbReset(){if(NB.z){const i=zs.indexOf(NB.z);if(i>=0)zs.splice(i,1)}NB.z=null;NB.st='idle';NB.tg=null;DZ.length=0}
+function nbKillLn(){for(let i=zs.length-1;i>=0;i--)if(zs[i].ln){DIED.push(zs[i].id);zs.splice(i,1)}}
+function nbCall(z){for(const sd of[-1,1]){let x=z.x,y=z.y;for(const r of[90,60,120,30]){const cx=z.x+Math.cos(z.a+sd*Math.PI/2)*r,cy=z.y+Math.sin(z.a+sd*Math.PI/2)*r;if(!inWall(cx,cy,16)){x=cx;y=cy;break}}
+ zs.push({id:zid++,x,y,hp:260,mh:260,sp:140,dm:14,sd:0,kd:15,rs:1,fz:0,sc:0,cd:0,a:z.a,ag:1,wt:0,wa:0,lost:0,lx:0,ly:0,lt:0,los:null,hit:0,pt:0,dir:true,ln:1});evs.push([Math.round(x),Math.round(y),60])}}
+function nbSpit(z,al){const add=(x,y,dl)=>{if(DZ.length<44)DZ.push({x,y,r:58,t:1.4+dl,m:1.4+dl})};
+ for(const o of al){if(!o.alive)continue;const d=Math.hypot(o.x-z.x,o.y-z.y);if(d>900)continue;const q=o.nq||{vx:0,vy:0},px=o.x+Math.max(-320,Math.min(320,q.vx*1.3)),py=o.y+Math.max(-320,Math.min(320,q.vy*1.3));
+  add(o.x,o.y,0);add(px,py,.1);const a=Math.atan2(o.y-z.y,o.x-z.x);
+  for(let l=-1;l<=1;l++)for(let k=0;k<4;k++){const r=d*[.4,.65,.9,1.2][k],aa=a+l*.22;add(z.x+Math.cos(aa)*r,z.y+Math.sin(aa)*r,k*.1)}}}
+function nbReset(){nbKillLn();if(NB.z){const i=zs.indexOf(NB.z);if(i>=0)zs.splice(i,1)}NB.z=null;NB.st='idle';NB.tg=null;DZ.length=0}
 function nbSpawn(){let x=KS.x,y=KS.y+130,ok=false;for(let r=130;r<420&&!ok;r+=40)for(let i=0;i<12&&!ok;i++){const a=Math.PI/2+i/12*TAU;x=KS.x+Math.cos(a)*r;y=KS.y+Math.sin(a)*r;ok=x>80&&y>80&&x<WS-80&&y<WS-80&&!inWall(x,y,60)}
- const n=Math.max(1,[...P.values()].filter(o=>o.alive&&Math.hypot(o.x-KS.x,o.y-KS.y)<1100).length),hp=3000+600*(n-1);
+ const n=Math.max(1,[...P.values()].filter(o=>o.alive&&Math.hypot(o.x-KS.x,o.y-KS.y)<1100).length),hp=3750+450*(n-1);
  NB.z={id:zid++,x,y,hp,mh:hp,sp:115,dm:0,sd:0,kd:14,rs:3.8,fz:0,sc:1,cd:1.5,a:Math.PI/2,ag:1,wt:0,wa:0,lost:0,lx:0,ly:0,lt:0,los:null,hit:0,pt:0,dir:true,nb:1};
  zs.push(NB.z);NB.st='walk';NB.t=0;NB.cc=0;NB.away=0;NB.tg=null;bcast({t:'bm',k:'nspawn'})}
 function nbHurt(z,d,o){if(z.dead)return;z.hp-=d;z.hit=.1;if(z.hp<=0){z.dead=1;if(o&&o.k!==undefined)o.k++}}
@@ -325,10 +332,11 @@ function nbTick(dt,al){
  if(NB.st==='sum'){if((NB.t-=dt)<=0)nbSpawn();return}
  const z=NB.z;if(!z){NB.st='idle';return}
  for(let i=DZ.length-1;i>=0;i--){const q=DZ[i];q.t-=dt;if(q.t<=0){for(const o of al)if(o.alive&&Math.hypot(o.x-q.x,o.y-q.y)<q.r+8)nbHit(o,26,q,0);evs.push([Math.round(q.x),Math.round(q.y),50]);DZ.splice(i,1)}}
- if(z.dead){DIED.push(z.id);evs.push([Math.round(z.x),Math.round(z.y)]);const r=WBS[5];
-  GI.push({id:gid++,x:KS.x-30,y:KS.y+34,k:'w',s:5,i:r[Math.random()*r.length|0],n:1,ttl:600,hold:0},{id:gid++,x:KS.x,y:KS.y+42,k:'a',s:5,i:0,n:1,ttl:600,hold:0},{id:gid++,x:KS.x+30,y:KS.y+34,k:'h',s:5,i:0,n:1,ttl:600,hold:0});
+ if(z.dead){if(NB.st!=='dying'){NB.st='dying';NB.t=2.6;DZ.length=0;nbKillLn()}NB.t-=dt;z.fz=6+Math.min(.99,Math.max(0,1-NB.t/2.6));z.ag=0;if(NB.t>0)return;DIED.push(z.id);for(let k=0;k<6;k++)evs.push([Math.round(z.x+(Math.random()-.5)*150),Math.round(z.y+(Math.random()-.5)*150),k?110:240]);const r=WBS[5];
+  GI.push({id:gid++,x:KS.x,y:KS.y+70,k:'w',s:6,i:24,n:1,ttl:600,hold:0},{id:gid++,x:KS.x-30,y:KS.y+34,k:'w',s:5,i:r[Math.random()*r.length|0],n:1,ttl:600,hold:0},{id:gid++,x:KS.x,y:KS.y+42,k:'a',s:5,i:0,n:1,ttl:600,hold:0},{id:gid++,x:KS.x+30,y:KS.y+34,k:'h',s:5,i:0,n:1,ttl:600,hold:0});
   nbReset();NB.cdUntil=Date.now()+120000;bcast({t:'bm',k:'ndead'});return}
  z.hit-=dt;z.cd-=dt;NB.t-=dt;NB.cc-=dt;
+ for(const o of al){const q=o.nq||(o.nq={x:o.x,y:o.y,vx:0,vy:0});q.vx=q.vx*.7+(o.x-q.x)/dt*.3;q.vy=q.vy*.7+(o.y-q.y)/dt*.3;q.x=o.x;q.y=o.y}
  NB.lt-=dt;if(NB.lt<=0){NB.lt=.3;let b=null,bd=1e9;for(const o of al){if(!o.alive||o.inv>Date.now())continue;const d=Math.hypot(o.x-z.x,o.y-z.y);if(d<bd){bd=d;b=o}}NB.tg=b&&bd<1500?b:null}
  const tg=NB.tg&&NB.tg.alive?NB.tg:null;
  if(!tg){NB.away+=dt;if(NB.away>20){nbReset();bcast({t:'bm',k:'nleave'});return}}else NB.away=0;
@@ -337,10 +345,10 @@ function nbTick(dt,al){
  if(st!=='dash'&&st!=='spin'&&NB.cc<=0)for(const o of al)if(o.alive&&Math.hypot(o.x-z.x,o.y-z.y)<14*z.rs+16){NB.cc=.9;nbHit(o,28,z,300);break}
  if(st==='walk'){z.fz=0;
   if(tg){turn(toT,6);if(d>90){let ma=toT;if(!los(z.x,z.y,tg.x,tg.y)){const s=stepDir(z,tg.x,tg.y);if(s)ma=Math.atan2(s[1],s[0])}nbMove(z,ma,z.sp*dt)}
-   if(z.cd<=0){const op=[],lo=d<800&&los(z.x,z.y,tg.x,tg.y);if(d<240)op.push('swind','swind');if(d>160&&d<700&&lo)op.push('dwind','dwind');if(d<800)op.push('spit');
+   if(z.cd<=0){const op=[],lo=d<800&&los(z.x,z.y,tg.x,tg.y);if(d<240)op.push('swind','swind');if(d>160&&d<700&&lo)op.push('dwind','dwind');if(d<800)op.push('spit','spit');if(d<900&&zs.reduce((a,q)=>a+(q.ln?1:0),0)<2)op.push('call','call');
     if(op.length){const c=op[Math.random()*op.length|0];NB.st=c;
      if(c==='dwind')NB.t=.9;else if(c==='swind')NB.t=.8;
-     else{NB.t=.9;const n=[...al].filter(o=>o.alive&&Math.hypot(o.x-z.x,o.y-z.y)<900);for(const o of n){if(DZ.length>=12)break;DZ.push({x:o.x,y:o.y,r:58,t:1.4,m:1.4});for(let k=0;k<3&&DZ.length<12;k++){const a=Math.random()*TAU,r=60+Math.random()*190;DZ.push({x:o.x+Math.cos(a)*r,y:o.y+Math.sin(a)*r,r:58,t:1.4+k*.15,m:1.4+k*.15})}}}}}}}
+     else if(c==='call'){NB.t=1}else{NB.t=.9;nbSpit(z,al)}}}}}
  else if(st==='dwind'){z.fz=1;if(tg)turn(toT,2.5);if(NB.t<=0){NB.dir=z.a;NB.t=.55;NB.hit=new Set();NB.st='dash'}}
  else if(st==='dash'){z.fz=2;const ok=nbMove(z,NB.dir,760*dt);
   for(const o of al)if(o.alive&&!NB.hit.has(o.id)&&Math.hypot(o.x-z.x,o.y-z.y)<14*z.rs+14){NB.hit.add(o.id);nbHit(o,45,z,420)}
@@ -350,6 +358,7 @@ function nbTick(dt,al){
  else if(st==='spin'){z.fz=4;if(tg)nbMove(z,toT,70*dt);NB.sk-=dt;
   if(NB.sk<=0){NB.sk=.35;for(const o of al)if(o.alive&&Math.hypot(o.x-z.x,o.y-z.y)<200)nbHit(o,18,z,380);for(const q of zs)if(Math.hypot(q.x-z.x,q.y-z.y)<200)nbShove(q,z,170,25)}
   if(NB.t<=0){NB.st='walk';z.cd=1.8}}
+ else if(st==='call'){z.fz=8;if(tg)turn(toT,3);if(NB.t<=0){nbCall(z);NB.st='walk';z.cd=1.6}}
  else if(st==='spit'){z.fz=5;if(tg)turn(toT,4);if(NB.t<=0){NB.st='walk';z.cd=1.6}}
 }
 function tick(){const dt=.05,al=[...P.values()].filter(o=>o.alive);bikeTick();
@@ -365,10 +374,11 @@ function tick(){const dt=.05,al=[...P.values()].filter(o=>o.alive);bikeTick();
  for(let i=nades.length-1;i>=0;i--){const g=nades[i];if(g.tl>0){g.tl-=dt;const nx=g.x+g.vx*dt,ny=g.y+g.vy*dt;if(inWall(nx,ny,4))g.tl=0;else{g.x=nx;g.y=ny}}else if(g.ty>=2){if(!g.on){g.on=1;g.ttl=g.ty===2?8:g.ty===3?10:g.ty===5?30:5;g.bt=0}g.ttl-=dt;g.fz=g.ttl;if(g.ty===5)turretTick(g,dt);if(g.ty===4){g.bt-=dt;if(g.bt<=0){g.bt=.25;const ow=P.get(g.oid)||{x:g.x,y:g.y,k:0};for(const q of zs)if(!q.dead&&Math.hypot(q.x-g.x,q.y-g.y)<70)hurt(q,7,ow)}}if(g.ttl<=0)nades.splice(i,1)}else if(g.ty===1){g.ttl-=dt;let hit=false;for(const q of zs)if(!q.dead&&Math.hypot(q.x-g.x,q.y-g.y)<22){hit=true;break}if(hit){mineBlast(g.x,g.y,P.get(g.oid)||{x:g.x,y:g.y,k:0});nades.splice(i,1)}else if(g.ttl<=0)nades.splice(i,1)}else{g.fz-=dt;if(g.fz<=0){blast(g.x,g.y,P.get(g.oid)||{x:g.x,y:g.y,k:0});nades.splice(i,1)}}}
  SM=nades.filter(g=>g.ty===2&&g.on);LUS=nades.filter(g=>g.ty===3&&g.on);
  wormTick(dt);mwTick(dt);hunterTick(dt,al);nbTick(dt,al);spT+=dt;
- if(spT>.5){spT=0;if(W.st!=='idle')for(let i=zs.length-1;i>=0;i--){const z=zs[i];if(z.bs||z.mw||z.nb||z.dead)continue;for(const o of al)if(Math.hypot(z.x-o.x,z.y-o.y)<1100){DIED.push(z.id);zs.splice(i,1);break}}
+ if(spT>.5){spT=0;if(NB.st!=='idle')for(let i=zs.length-1;i>=0;i--){const z=zs[i];if(z.bs||z.mw||z.nb||z.hn||z.ln||z.dead)continue;if(Math.hypot(z.x-KS.x,z.y-KS.y)<1300){DIED.push(z.id);zs.splice(i,1)}}
+ if(W.st!=='idle')for(let i=zs.length-1;i>=0;i--){const z=zs[i];if(z.bs||z.mw||z.nb||z.dead)continue;for(const o of al)if(Math.hypot(z.x-o.x,z.y-o.y)<1100){DIED.push(z.id);zs.splice(i,1);break}}
  if(W.st==='idle')for(const o of al){if(zs.length>=160)break;let n=0;for(const z of zs)if(!z.bs&&!z.mw&&!z.hn&&!z.nb&&Math.hypot(z.x-o.x,z.y-o.y)<850)n++;n+=mwNear(o.x,o.y,850);
   if(n<10+3*zoneAt(o.x,o.y)){const a=Math.random()*TAU,d=620+Math.random()*180,x=o.x+Math.cos(a)*d,y=o.y+Math.sin(a)*d;
-   if(x>20&&y>20&&x<WS-20&&y<WS-20&&!inWall(x,y,16)){let k=mkZ(zoneAt(x,y));if(k.kd===11){if(mwNear(o.x,o.y,900)<2){mwSpawn(x,y,k.hp);continue}k={kd:5,rs:1,hp:k.hp*.5,sp:k.sp,dm:k.dm}}zs.push({id:zid++,x,y,hp:k.hp,mh:k.hp,sp:k.sp,dm:k.dm,sd:k.sd||0,kd:k.kd,rs:k.rs,fz:0,sc:1+Math.random()*1.5,cd:0,a:0,ag:0,wt:0,wa:0,lost:0,lx:0,ly:0,lt:0,los:null,hit:0,pt:0,dir:true})}}}}
+   if(x>20&&y>20&&x<WS-20&&y<WS-20&&!inWall(x,y,16)&&!(NB.st!=='idle'&&Math.hypot(x-KS.x,y-KS.y)<1400)){let k=mkZ(zoneAt(x,y));if(k.kd===11){if(mwNear(o.x,o.y,900)<2){mwSpawn(x,y,k.hp);continue}k={kd:5,rs:1,hp:k.hp*.5,sp:k.sp,dm:k.dm}}zs.push({id:zid++,x,y,hp:k.hp,mh:k.hp,sp:k.sp,dm:k.dm,sd:k.sd||0,kd:k.kd,rs:k.rs,fz:0,sc:1+Math.random()*1.5,cd:0,a:0,ag:0,wt:0,wa:0,lost:0,lx:0,ly:0,lt:0,los:null,hit:0,pt:0,dir:true})}}}}
  for(let i=zs.length-1;i>=0;i--){const z=zs[i];
   if(z.bs||z.mw||z.hn||z.nb)continue;
   if(z.dead){DIED.push(z.id);zs.splice(i,1);continue}
@@ -377,6 +387,7 @@ function tick(){const dt=.05,al=[...P.values()].filter(o=>o.alive);bikeTick();
   z.lt-=dt;z.hit-=dt;
   if(z.lt<=0){z.lt=.2;z.los=null;for(const o of al){if(o.inv>Date.now())continue;const dz=Math.hypot(o.x-z.x,o.y-z.y);if(dz>50&&SM.some(s=>Math.hypot(s.x-o.x,s.y-o.y)<135))continue;if(dz<(o.hid?55:240)&&los(z.x,z.y,o.x,o.y)&&!bushBlock(z.x,z.y,o.x,o.y)){z.los=o;break}}}
   if(z.los&&!z.los.alive)z.los=null;
+  if(z.ln)z.los=tp;
   if(!z.los&&LUS.length&&!z.bs&&!z.mw){let b=null,bd=700;for(const l of LUS){const d=Math.hypot(l.x-z.x,l.y-z.y);if(d<bd){bd=d;b=l}}if(b&&bd>30){z.ag=1;z.lost=0;z.lx=b.x;z.ly=b.y}}
   if(z.kd===7&&!z.wk){if(td<100){z.wk=1;z.ag=1}else{z.ag=0;continue}}
   if(z.kd===4){if(z.fz>0){z.fz-=dt;if(td>150)z.fz=0;else if(z.fz<=0){DIED.push(z.id);explode(z);zs.splice(i,1);continue}}else if(td<70&&z.los)z.fz=1.2}
