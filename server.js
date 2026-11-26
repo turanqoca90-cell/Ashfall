@@ -99,6 +99,27 @@ const DST={
   b.ws.forEach(q=>rb.add(q));m.ws.forEach(q=>nw.push(q));
   bl[i]={x,y,w:BW,h:BH,z:2,c:'#d6b57a',t:T.t,lb:T.lb,pl,dr:m.dr,ws:m.ws,cells:m.cells,cs:m.cs,os:m.os,kd:m.kd,S,cr}}
  for(let i=walls.length-1;i>=0;i--)if(rb.has(walls[i]))walls.splice(i,1);nw.forEach(q=>walls.push(q))}
+/* forest designs (shared code, keep identical in both files): every building in region 3 is rebuilt as a log cabin design with mkDes. Own rng(31), nothing else shifts.
+   t 20 cabin, 21 hunter hut, 22 lodge, 23 sawmill, 24 trapper camp, 25 watch fort. Cell letters as for the desert (O yard, F yard with campfire, P yard with log stack). */
+const FST={
+ cabin:{t:20,S:70,lb:.1,m:2,rows:['XXO','XX.'],gt:[['b',1,0],['r',0,2]]},
+ hut:{t:21,S:80,lb:.3,m:1,rows:['XT'],gt:[['t',0,0]]},
+ lodge:{t:22,S:92,lb:.35,m:2,rows:['XDDX','XXXX'],gt:[['b',1,1],['l',0,0],['t',0,3]]},
+ mill:{t:23,S:92,lb:.2,m:2,rows:['XXOO','XXPO'],gt:[['b',1,0],['r',0,3],['t',0,3]]},
+ camp:{t:24,S:84,lb:.25,m:1,rows:['XOX','OFO','XOX'],gt:[['b',2,1],['t',0,1],['l',1,0],['r',1,2]]},
+ fort:{t:25,S:88,lb:.4,m:1,rows:['TOT','XFX','TOT'],gt:[['b',2,1],['t',0,1]]}};
+{const RD=rng(31),rb=new Set(),nw=[],sw={l:'r',r:'l',t:'t',b:'b'};
+ for(let i=0;i<bl.length;i++){const b=bl[i];if(b.z!==3)continue;
+  const big=b.t>=4,r=RD(),fl=RD()<.5,pl=Math.floor(RD()*4),T=FST[big?(r<.3?'lodge':r<.55?'mill':r<.8?'camp':'fort'):(r<.6?'cabin':'hut')];
+  let rows=T.rows,gt=T.gt;if(fl){const nc=rows[0].length;rows=rows.map(s=>[...s].reverse().join(''));gt=gt.map(q=>[sw[q[0]],q[1],nc-1-q[2]])}
+  const S=T.S,BW=rows[0].length*S,BH=rows.length*S,x=Math.round(b.x+b.w/2-BW/2),y=Math.round(b.y+b.h/2-BH/2),m=mkDes(x,y,S,rows,gt),cr=[];let n=0;
+  m.cells.forEach(([rr,c])=>{const ch=m.kd.get(rr*20+c),X=x+c*S,Y=y+rr*S;
+   if(ch==='D'){cr.push({x:X+S*.34,y:Y+S*.5,t:0},{x:X+S*.66,y:Y+S*.5,t:0})}
+   else if(ch==='T')cr.push({x:X+S*.5,y:Y+S*.5,t:0});
+   else if(ch==='X'&&n++%T.m===0)cr.push({x:X+S*.3,y:Y+S*.3,t:0})});
+  b.ws.forEach(q=>rb.add(q));m.ws.forEach(q=>nw.push(q));
+  bl[i]={x,y,w:BW,h:BH,z:3,c:'#6b4a2b',t:T.t,lb:T.lb,pl,dr:m.dr,ws:m.ws,cells:m.cells,cs:m.cs,os:m.os,kd:m.kd,S,cr}}
+ for(let i=walls.length-1;i>=0;i--)if(rb.has(walls[i]))walls.splice(i,1);nw.forEach(q=>walls.push(q))}
 let _n=0;const CR=[];bl.forEach(b=>b.cr.forEach(q=>{q.id=_n++;q.b=b;CR.push(q)}));
 for(let i=0;i<700;i++){const x=R0()*WS,y=R0()*WS,r=22+R0()*10;if(bl.some(b=>x>b.x-r-12&&x<b.x+b.w+r+12&&y>b.y-r-12&&y<b.y+b.h+r+12))continue;trees.push([x,y,r])}
 for(let i=0;i<550;i++){const x=R0()*WS/2,y=WS/2+R0()*WS/2,r=22+R0()*10;if(bl.some(b=>x>b.x-r-12&&x<b.x+b.w+r+12&&y>b.y-r-12&&y<b.y+b.h+r+12))continue;trees.push([x,y,r])}
@@ -111,6 +132,9 @@ const inside=(o,b)=>b.cells?b.cs.has(Math.floor((o.y-b.y)/b.S)*20+Math.floor((o.
 /* wall lookup grid: only check the walls in the cell, much cheaper than all of them */
 const GRID=new Map(),NONE=[],GK=(cx,cy)=>(cx+10)*4096+(cy+10);
 for(let i=trees.length-1;i>=0;i--)if(Math.hypot(trees[i][0]-ALT.x,trees[i][1]-ALT.y)<115)trees.splice(i,1);
+/* mystery key shrine: a gold pole with a disc in the bottom-left corner of region 1 (shared code, keep identical in both files) */
+const KS=(()=>{for(let y=3000;y>=2500;y-=50)for(let x=240;x<=900;x+=50)if(!bl.some(b=>x>b.x-170&&x<b.x+b.w+170&&y>b.y-170&&y<b.y+b.h+170))return{x,y};return{x:240,y:3000}})();
+for(let i=trees.length-1;i>=0;i--)if(Math.hypot(trees[i][0]-KS.x,trees[i][1]-KS.y)<110)trees.splice(i,1);
 const BG=new Map();for(const t of trees){const k=(t[0]>>7)*100+(t[1]>>7);let a=BG.get(k);if(!a){a=[];BG.set(k,a)}a.push(t)}
 const bushBlock=(x1,y1,x2,y2)=>{const d=Math.hypot(x2-x1,y2-y1),n=Math.ceil(d/12);for(let i=1;i<n;i++){const x=x1+(x2-x1)*i/n,y=y1+(y2-y1)*i/n,gx=x>>7,gy=y>>7;for(let a=gx-1;a<=gx+1;a++)for(let b=gy-1;b<=gy+1;b++){const l=BG.get(a*100+b);if(!l)continue;for(const t of l){const dx=x-t[0],dy=y-t[1],r=t[2]*.85;if(dx*dx+dy*dy<r*r&&Math.hypot(x1-t[0],y1-t[1])>t[2]&&Math.hypot(x2-t[0],y2-t[1])>t[2])return true}}}return false};
 const TK=[];{const RT=rng(13);for(let i=0;i<1400&&TK.length<260;i++){const x=70+RT()*(WS/2-140),y=WS/2+70+RT()*(WS/2-140);if(bl.some(b=>x>b.x-45&&x<b.x+b.w+45&&y>b.y-45&&y<b.y+b.h+45))continue;if(TK.some(t=>Math.hypot(t.cx-x,t.cy-y)<60))continue;TK.push({x:x-12,y:y-12,w:24,h:24,tk:1,cx:x,cy:y})}}
@@ -124,17 +148,19 @@ function wallSet(q,on){for(let cx=Math.floor((q.x-24)/128);cx<=Math.floor((q.x+q
 const GI=[],OPEN=new Set(),RARE=new Set();let gid=1;
 function rollRare(c){c.open=false;OPEN.delete(c);const z=c.b.z;c.rare=Math.random()<(z===4?.15:z===3?.10:z===2?.05:.01);if(c.rare)RARE.add(c);else RARE.delete(c)}
 for(const c of CR)rollRare(c);
-function rollItem(z,lb){if(Math.random()<.1)return{k:'a',s:z+1,i:0};let r=Math.random()*100,s=5;const wt=WT[z];for(let i=0;i<5;i++){if(r<wt[i]){s=i+1;break}r-=wt[i]}if(s<5&&Math.random()<lb)s++;
+function rollStar(z,lb){let r=Math.random()*100,s=5;const wt=WT[z];for(let i=0;i<5;i++){if(r<wt[i]){s=i+1;break}r-=wt[i]}if(s<5&&Math.random()<lb)s++;return s}
+/* every crate gives exactly 1 gun (rollGun) + 1 item (rollItem: vest, heal, grenade, mine, potion); rare crates give a 4-5 star gun */
+function rollGun(z,lb){const s=rollStar(z,lb);return{k:'w',s,i:WBS[s][Math.random()*WBS[s].length|0]}}
+function rollItem(z,lb){if(Math.random()<.2)return{k:'a',s:z+1,i:0};let s=Math.max(2,rollStar(z,lb));
  if(s===3&&Math.random()<.3)return{k:'g',s:3,i:[0,0,2,3][Math.random()*4|0]};
- if(s===4&&Math.random()<.2)return{k:'g',s:4,i:4};
- if(s===4&&Math.random()<.25)return{k:'p',s:4,i:Math.random()*3|0};
+ if(s===4){const r=Math.random();if(r<.4)return{k:'g',s:4,i:4};return{k:'p',s:4,i:Math.random()*3|0}}
  if(s===5&&Math.random()<.3)return{k:'g',s:5,i:Math.random()<.5?1:5};
- let k=Math.random()<.75?'w':'h';if(k==='h'&&(s===1||s===4))k='w';return k==='w'?{k,s,i:WBS[s][Math.random()*WBS[s].length|0]}:{k,s,i:0}}
+ return{k:'h',s,i:0}}
 function rareItem(){const s=Math.random()<.65?4:5;return{k:'w',s,i:WBS[s][Math.random()*WBS[s].length|0]}}
-const kc=k=>k==='w'?0:k==='g'?2:k==='p'?3:k==='a'?4:1;
+const kc=k=>k==='w'?0:k==='g'?2:k==='p'?3:k==='a'?4:k==='y'?5:1;
 const scap=m=>m.k==='g'?(m.i===1?1:m.i===5?2:3):m.k==='p'?2:m.k==='h'?(m.s===2?4:m.s===3?3:2):1;
 const snn=m=>Math.max(1,Math.min(scap(m),(m.n|0)||1));
-const validItem=m=>m&&((m.k==='a'&&m.i===0&&(m.s===2||m.s===3||m.s===4||m.s===5))||(m.k==='g'&&((m.i===0&&m.s===3)||(m.i===1&&m.s===5)||(m.i===5&&m.s===5)||((m.i===2||m.i===3)&&m.s===3)||(m.i===4&&m.s===4)))||(m.k==='p'&&m.s===4&&(m.i===0||m.i===1||m.i===2))||(m.k==='w'&&m.s>=1&&m.s<=6&&WBS[m.s].includes(m.i))||(m.k==='h'&&(m.s===2||m.s===3||m.s===5)));
+const validItem=m=>m&&((m.k==='y'&&m.s===3&&m.i===0)||(m.k==='a'&&m.i===0&&(m.s===2||m.s===3||m.s===4||m.s===5))||(m.k==='g'&&((m.i===0&&m.s===3)||(m.i===1&&m.s===5)||(m.i===5&&m.s===5)||((m.i===2||m.i===3)&&m.s===3)||(m.i===4&&m.s===4)))||(m.k==='p'&&m.s===4&&(m.i===0||m.i===1||m.i===2))||(m.k==='w'&&m.s>=1&&m.s<=6&&WBS[m.s].includes(m.i))||(m.k==='h'&&(m.s===2||m.s===3||m.s===5)));
 /* zombie pathfinding: a blocked-cell grid plus a breadth-first distance field toward the target */
 const CS=16,NC=400,FR=38,FW=77,DX=[1,-1,0,0,1,1,-1,-1],DY=[0,0,1,-1,1,-1,1,-1],BLK=new Uint8Array(NC*NC),FC=new Map();let fbud=0;
 for(const q of walls.concat(TK)){const x0=Math.max(0,Math.floor((q.x-9)/CS)),x1=Math.min(NC-1,Math.floor((q.x+q.w+9)/CS)),y0=Math.max(0,Math.floor((q.y-9)/CS)),y1=Math.min(NC-1,Math.floor((q.y+q.h+9)/CS));for(let cy=y0;cy<=y1;cy++)for(let cx=x0;cx<=x1;cx++)BLK[cy*NC+cx]=1}
@@ -157,7 +183,7 @@ function stepDir(z,tx,ty){const f=getField(tx,ty);if(!f)return null;const cx=Mat
 function mkZ(z){const r=Math.random(),bg=.06+z*.06,ex=.03+z*.025,sc=.03+z*.02,k=r<bg?2:r<bg+ex?4:r<bg+ex+sc?3:r<bg+ex+sc+.22?1:0,hv=.8+Math.random()*.45,b=28+z*24,s=(46+z*12+Math.random()*14)*1.15,d=6+z*3;
  if(z===3&&Math.random()<.25)return{kd:7,rs:.9,hp:b*hv,sp:s,dm:d};
  if(k===1)return{kd:1,rs:1,hp:b*.7*hv,sp:s*1.5,dm:d};
- if(k===2&&z===2)return{kd:11,rs:1,hp:260*hv,sp:s,dm:d};
+ if(k===2&&z===2)return{kd:11,rs:1,hp:180*hv,sp:s,dm:d};
  if(k===2)return{kd:2,rs:1.3,hp:b*2*hv,sp:s,dm:d*1.3};
  if(k===3)return{kd:3,rs:1,hp:b*.65*hv,sp:s*.85,dm:d*.6,sd:7+z*4};
  if(k===4)return{kd:4,rs:1.1,hp:b*.8*hv,sp:s*1.15,dm:0};
@@ -169,6 +195,9 @@ const los=(x1,y1,x2,y2)=>{const d=Math.hypot(x2-x1,y2-y1),n=Math.ceil(d/8);for(l
 const cl=v=>Math.max(12,Math.min(WS-12,+v||0));
 let SM=[],LUS=[];const P=new Map();let nid=1,zid=1,zs=[],bullets=[],spT=0,spits=[],sid=1,evs=[],rst=1,nades=[],nid2=1;
 const send=(o,m)=>{if(o.ws.readyState===1)o.ws.send(JSON.stringify(m))};
+function crateRoll(c,cid){const lb=c.b.lb||0,items=[c.rare?rareItem():rollGun(c.b.z,lb),rollItem(c.b.z,lb)];
+ const gl=[],ng=[];for(const it of items){const g={id:gid++,x:c.x+(Math.random()-.5)*36,y:c.y+10+Math.random()*20,ttl:30,hold:0,k:it.k,s:it.s,i:it.i};gl.push(g);ng.push([g.id,Math.round(g.x),Math.round(g.y),kc(g.k),g.s,g.i||0,0,30])}
+ return{cid,t:Date.now(),gl,ng}}
 /* bikes: 2 seats. The driver's client simulates the bike (its position comes with 'pos'); the passenger is carried along. */
 const BK=[];let bkid=1;
 function bikeOf(o){return BK.find(b=>b.drv===o.id||b.pas===o.id)}
@@ -228,11 +257,14 @@ async function handle(o,m){
   const ty=Math.max(0,Math.min(5,m.ty|0));if(ty===1||ty===5){const lim=ty===1?4:2,mn=nades.filter(g=>g.ty===ty&&g.oid===o.id);if(mn.length>=lim)nades.splice(nades.indexOf(mn[0]),1)}
   nades.push({id:nid2++,cid:m.cid|0,oid:o.id,ty,x,y,vx:Math.cos(m.a)*((ty===1||ty===5)?260:300),vy:Math.sin(m.a)*((ty===1||ty===5)?260:300),tl:(ty===1||ty===5)?.34:.49,fz:1,ttl:180,ta:m.a,sc:0})}
  else if(m.t==='heal'){o.hp=Math.min(100,o.hp+Math.max(0,Math.min(100,+m.a||0)))}
+ else if(m.t==='srch'){const c=CR[m.id|0];if(!c||c.open||Math.hypot(o.x-c.x,o.y-c.y)>90)return;o.pre=crateRoll(c,m.id|0);send(o,{t:'sr',cid:m.id|0,g:o.pre.ng})}
  else if(m.t==='search'){const c=CR[m.id|0];if(!c||c.open||Math.hypot(o.x-c.x,o.y-c.y)>90)return;c.open=true;c.rt=180;OPEN.add(c);RARE.delete(c);
-  const lb=c.b.lb||0,items=c.rare?[rareItem(),rollItem(c.b.z,lb)]:Math.random()<.35?[rollItem(c.b.z,lb),rollItem(c.b.z,lb)]:[rollItem(c.b.z,lb)];
-  const ng=[];for(const it of items){const g={id:gid++,x:c.x+(Math.random()-.5)*36,y:c.y+10+Math.random()*20,ttl:30,hold:0,k:it.k,s:it.s,i:it.i};GI.push(g);ng.push([g.id,Math.round(g.x),Math.round(g.y),kc(g.k),g.s,g.i||0,0,30])}
-  send(o,{t:'gi',g:ng})}
+  const pr=o.pre&&o.pre.cid===(m.id|0)&&Date.now()-o.pre.t<30000?o.pre:crateRoll(c,m.id|0);o.pre=null;
+  for(const g of pr.gl){g.ttl=30;GI.push(g)}
+  send(o,{t:'gi',g:pr.ng})}
  else if(m.t==='pick'){const i=GI.findIndex(g=>g.id===m.id);if(i<0)return;const g=GI[i];if(g.hold===o.id||Math.hypot(o.x-g.x,o.y-g.y)>45)return;GI.splice(i,1);send(o,{t:'got',it:{k:g.k,s:g.s,i:g.i||0,n:g.n||1}})}
+ else if(m.t==='key'){const n=Date.now();if(!o.alive||n-(o.kt||0)<3000||Math.hypot(o.x-KS.x,o.y-KS.y)>130)return;o.kt=n;const r=WBS[5];
+  GI.push({id:gid++,x:KS.x-30,y:KS.y+34,k:'w',s:5,i:r[Math.random()*r.length|0],n:1,ttl:600,hold:0},{id:gid++,x:KS.x,y:KS.y+42,k:'a',s:5,i:0,n:1,ttl:600,hold:0},{id:gid++,x:KS.x+30,y:KS.y+34,k:'h',s:5,i:0,n:1,ttl:600,hold:0});bcast({t:'ks'})}
  else if(m.t==='altar'){if(o.alive&&W.st==='idle'&&Date.now()>=W.cdUntil&&Math.hypot(o.x-ALT.x,o.y-ALT.y)<130)wormStart()}
  else if(m.t==='swap'){const i=GI.findIndex(g=>g.id===m.id);if(i<0||!validItem(m.give))return;const g=GI[i];if(g.hold===o.id||Math.hypot(o.x-g.x,o.y-g.y)>45)return;GI.splice(i,1);GI.push({id:gid++,x:g.x,y:g.y,k:m.give.k,s:m.give.s,i:m.give.i,n:snn(m.give),ttl:30,hold:o.id});send(o,{t:'got',it:{k:g.k,s:g.s,i:g.i||0,n:g.n||1},sw:1})}
  else if(m.t==='drop'){if(!validItem(m)||GI.length>400)return;GI.push({id:gid++,x:o.x+Math.cos(o.a)*26,y:o.y+Math.sin(o.a)*26,k:m.k,s:m.s,i:m.i,n:snn(m),ttl:30,hold:o.id})}
@@ -244,6 +276,35 @@ async function handle(o,m){
   else{noise(o.x,o.y);for(let i=0;i<w.pel;i++){const a=m.a+sprd(w),sp=w.sp||700;bullets.push({x:o.x,y:o.y,x0:o.x,y0:o.y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,l:w.rg/sp,rg:w.rg,fo:w.fo,pi:w.pi,pn:w.pn||0,pf:w.pf,hz:(w.pi||w.pn)?[]:null,d:w.d*dmx(o),o})}}}
 }
 
+/* HUNTER (kd 13): lives in a forest hunter hut (t 21), 1 in 10 huts has one. Sleeps until a player steps inside (or shoots him), then chases and fires a shotgun
+   (7 pellets, they travel as 'spits' with pl:1). Gives up after 8 s without sight and walks home. Dies: drops the Mystery key (k:'y', blue) + a blue shotgun. Re-rolls 10 % after 10 min. */
+const HT=[];for(const b of bl){if(b.t!==21)continue;let cx=b.x+b.w/2,cy=b.y+b.h/2;for(const[r,c]of b.cells)if(b.kd.get(r*20+c)==='X'){cx=b.x+c*b.S+b.S/2;cy=b.y+r*b.S+b.S/2;break}HT.push({b,cx,cy,on:Math.random()<.1,z:null,rt:0})}
+function hunterSpawn(h){const z={id:zid++,x:h.cx,y:h.cy,hp:700,mh:700,sp:105,dm:0,sd:0,kd:13,rs:1,fz:0,sc:0,cd:1,a:Math.PI/2,ag:0,wt:0,wa:0,lost:0,lx:0,ly:0,lt:0,los:null,hit:0,pt:0,dir:true,hn:h,st:'idle',ht:0};h.z=z;zs.push(z)}
+for(const h of HT)if(h.on)hunterSpawn(h);
+function hunterTick(dt,al){for(const h of HT){const z=h.z;
+  if(!z){if(!h.on&&h.rt>0&&(h.rt-=dt)<=0){h.on=Math.random()<.1;if(h.on)hunterSpawn(h)}continue}
+  if(z.dead){DIED.push(z.id);const i=zs.indexOf(z);if(i>=0)zs.splice(i,1);
+   GI.push({id:gid++,x:z.x-16,y:z.y,k:'y',s:3,i:0,n:1,ttl:900,hold:0},{id:gid++,x:z.x+16,y:z.y,k:'w',s:3,i:3,n:1,ttl:900,hold:0});
+   h.z=null;h.on=false;h.rt=600;continue}
+  const wasHit=z.hit>0;z.hit-=dt;z.cd-=dt;z.fz-=dt;
+  if(z.st==='idle'){z.ag=0;if(wasHit||al.some(o=>inside(o,h.b))){z.st='hunt';z.lost=0}else continue}
+  z.lt-=dt;
+  if(z.lt<=0){z.lt=.2;z.los=null;for(const o of al){if(o.inv>Date.now())continue;const dz=Math.hypot(o.x-z.x,o.y-z.y);if(dz<(o.hid?55:420)&&los(z.x,z.y,o.x,o.y)&&!bushBlock(z.x,z.y,o.x,o.y)){z.los=o;break}}}
+  if(z.los&&!z.los.alive)z.los=null;
+  if(z.los){z.st='hunt';z.lost=0;z.lx=z.los.x;z.ly=z.los.y;z.ht=0}else if(z.st==='hunt'&&(z.lost+=dt)>8){z.st='home';z.ht=0}
+  if(z.st==='home'){z.ag=0;z.ht+=dt;const d=Math.hypot(h.cx-z.x,h.cy-z.y);
+   if(d<14||z.ht>25){z.st='idle';z.hp=z.mh;z.x=h.cx;z.y=h.cy;continue}
+   let ax=h.cx-z.x,ay=h.cy-z.y;const s=d<700?stepDir(z,h.cx,h.cy):null;if(s){ax=s[0];ay=s[1]}
+   z.a=Math.atan2(ay,ax);z.x+=Math.cos(z.a)*z.sp*.8*dt;z.y+=Math.sin(z.a)*z.sp*.8*dt;push(z,12);continue}
+  z.ag=1;const tx=z.lx,ty=z.ly,dd=Math.hypot(tx-z.x,ty-z.y);
+  z.pt-=dt;if(z.pt<=0){z.pt=.25;z.dir=dd<70||los(z.x,z.y,tx,ty)}
+  let ax=tx-z.x,ay=ty-z.y;if(!z.dir&&dd<700){const s=stepDir(z,tx,ty);if(s){ax=s[0];ay=s[1]}}
+  const ma=Math.atan2(ay,ax);let mv=1;if(z.los){if(dd<120)mv=-.7;else if(dd<200)mv=0}
+  z.a=z.los?Math.atan2(ty-z.y,tx-z.x):ma;
+  if(mv){z.x+=Math.cos(ma)*z.sp*dt*mv;z.y+=Math.sin(ma)*z.sp*dt*mv}
+  push(z,12);
+  if(z.los&&dd<340&&z.cd<=0){z.cd=1.5+Math.random()*.4;z.fz=.2;const a=z.a;noise(z.x,z.y);
+   for(let i=0;i<7;i++){const q=a+(Math.random()-.5)*.3,v=520+Math.random()*80;spits.push({id:sid++,x:z.x+Math.cos(a)*24,y:z.y+Math.sin(a)*24,vx:Math.cos(q)*v,vy:Math.sin(q)*v,l:.55,d:6,pl:1})}}}}
 function tick(){const dt=.05,al=[...P.values()].filter(o=>o.alive);bikeTick();
  fbud=2;if(FC.size>50){const n=Date.now();for(const[k,f]of FC)if(n-f.t>1500)FC.delete(k)}
  if(DW.size&&(rst-=dt)<=0){rst=1;const now=Date.now(),r=[];for(const[id,t]of DW)if(now-t>240000){r.push(id);DW.delete(id);const q=walls[id];wallSet(q,true);reblk(q)}if(r.length){FC.clear();bcast({t:'wl',r})}}
@@ -256,12 +317,13 @@ function tick(){const dt=.05,al=[...P.values()].filter(o=>o.alive);bikeTick();
  for(let i=spits.length-1;i>=0;i--){const q=spits[i];let dead=false;for(let k=0;k<4&&!dead;k++){q.x+=q.vx*dt/4;q.y+=q.vy*dt/4;if(inWall(q.x,q.y)){dead=true;break}for(const o of al){if(o.alive&&Math.hypot(o.x-q.x,o.y-q.y)<16){harm(o,q.d);if(o.hp<=0)die(o);dead=true;break}}}q.l-=dt;if(dead||q.l<=0)spits.splice(i,1)}
  for(let i=nades.length-1;i>=0;i--){const g=nades[i];if(g.tl>0){g.tl-=dt;const nx=g.x+g.vx*dt,ny=g.y+g.vy*dt;if(inWall(nx,ny,4))g.tl=0;else{g.x=nx;g.y=ny}}else if(g.ty>=2){if(!g.on){g.on=1;g.ttl=g.ty===2?8:g.ty===3?10:g.ty===5?30:5;g.bt=0}g.ttl-=dt;g.fz=g.ttl;if(g.ty===5)turretTick(g,dt);if(g.ty===4){g.bt-=dt;if(g.bt<=0){g.bt=.25;const ow=P.get(g.oid)||{x:g.x,y:g.y,k:0};for(const q of zs)if(!q.dead&&Math.hypot(q.x-g.x,q.y-g.y)<70)hurt(q,7,ow)}}if(g.ttl<=0)nades.splice(i,1)}else if(g.ty===1){g.ttl-=dt;let hit=false;for(const q of zs)if(!q.dead&&Math.hypot(q.x-g.x,q.y-g.y)<22){hit=true;break}if(hit){mineBlast(g.x,g.y,P.get(g.oid)||{x:g.x,y:g.y,k:0});nades.splice(i,1)}else if(g.ttl<=0)nades.splice(i,1)}else{g.fz-=dt;if(g.fz<=0){blast(g.x,g.y,P.get(g.oid)||{x:g.x,y:g.y,k:0});nades.splice(i,1)}}}
  SM=nades.filter(g=>g.ty===2&&g.on);LUS=nades.filter(g=>g.ty===3&&g.on);
- wormTick(dt);mwTick(dt);spT+=dt;
- if(spT>.5){spT=0;if(W.st==='idle')for(const o of al){if(zs.length>=160)break;let n=0;for(const z of zs)if(!z.bs&&!z.mw&&Math.hypot(z.x-o.x,z.y-o.y)<850)n++;n+=mwNear(o.x,o.y,850);
+ wormTick(dt);mwTick(dt);hunterTick(dt,al);spT+=dt;
+ if(spT>.5){spT=0;if(W.st!=='idle')for(let i=zs.length-1;i>=0;i--){const z=zs[i];if(z.bs||z.mw||z.dead)continue;for(const o of al)if(Math.hypot(z.x-o.x,z.y-o.y)<1100){DIED.push(z.id);zs.splice(i,1);break}}
+ if(W.st==='idle')for(const o of al){if(zs.length>=160)break;let n=0;for(const z of zs)if(!z.bs&&!z.mw&&!z.hn&&Math.hypot(z.x-o.x,z.y-o.y)<850)n++;n+=mwNear(o.x,o.y,850);
   if(n<10+3*zoneAt(o.x,o.y)){const a=Math.random()*TAU,d=620+Math.random()*180,x=o.x+Math.cos(a)*d,y=o.y+Math.sin(a)*d;
    if(x>20&&y>20&&x<WS-20&&y<WS-20&&!inWall(x,y,16)){let k=mkZ(zoneAt(x,y));if(k.kd===11){if(mwNear(o.x,o.y,900)<2){mwSpawn(x,y,k.hp);continue}k={kd:5,rs:1,hp:k.hp*.5,sp:k.sp,dm:k.dm}}zs.push({id:zid++,x,y,hp:k.hp,mh:k.hp,sp:k.sp,dm:k.dm,sd:k.sd||0,kd:k.kd,rs:k.rs,fz:0,sc:1+Math.random()*1.5,cd:0,a:0,ag:0,wt:0,wa:0,lost:0,lx:0,ly:0,lt:0,los:null,hit:0,pt:0,dir:true})}}}}
  for(let i=zs.length-1;i>=0;i--){const z=zs[i];
-  if(z.bs||z.mw)continue;
+  if(z.bs||z.mw||z.hn)continue;
   if(z.dead){DIED.push(z.id);zs.splice(i,1);continue}
   let tp=null,td=1e9;for(const o of al){const d=Math.hypot(o.x-z.x,o.y-z.y);if(d<td){td=d;tp=o}}
   if(!tp||td>1100){zs.splice(i,1);continue}
@@ -285,7 +347,7 @@ function tick(){const dt=.05,al=[...P.values()].filter(o=>o.alive);bikeTick();
   if(o.alive){for(const g of GI)if(Math.abs(g.x-o.x)<750&&Math.abs(g.y-o.y)<750)gi.push([g.id,Math.round(g.x),Math.round(g.y),kc(g.k),g.s,g.i||0,g.hold===o.id?1:0,Math.ceil(g.ttl),g.n||1]);
    for(const c of OPEN)if(Math.abs(c.x-o.x)<850&&Math.abs(c.y-o.y)<850)cs.push([c.id,1]);for(const c of RARE)if(Math.abs(c.x-o.x)<850&&Math.abs(c.y-o.y)<850)cs.push([c.id,2])}
   if(o.alive)for(const q of zs)if(Math.abs(q.x-o.x)<850&&Math.abs(q.y-o.y)<850)z.push([q.id,Math.round(q.x),Math.round(q.y),Math.round(q.a*100),Math.round(q.hp),Math.round(q.mh),(q.kd===7&&q.wk?8:q.kd),Math.round(q.rs*10),q.ag?1:0,q.hit>0?1:0,Math.round(Math.max(0,q.fz||0)*10)]);
-  const sp=[];for(const q of spits)if(Math.abs(q.x-o.x)<850&&Math.abs(q.y-o.y)<850)sp.push([q.id,Math.round(q.x),Math.round(q.y)]);
+  const sp=[];for(const q of spits)if(Math.abs(q.x-o.x)<850&&Math.abs(q.y-o.y)<850)sp.push([q.id,Math.round(q.x),Math.round(q.y),q.pl?1:0]);
   const ex=evs.filter(e=>Math.abs(e[0]-o.x)<1300&&Math.abs(e[1]-o.y)<1300);
   const ng=[];for(const g of nades)if(Math.abs(g.x-o.x)<850&&Math.abs(g.y-o.y)<850)ng.push([g.id,Math.round(g.x),Math.round(g.y),g.tl>0?0:1,Math.max(0,Math.round(g.fz*10)),g.cid,g.oid===o.id?1:0,g.ty||0,Math.round((g.ta||0)*100),g.sc|0]);
   const wh=[];if(o.alive)for(const w of MW)if(w.hole.a>0&&Math.abs(w.hole.x-o.x)<850&&Math.abs(w.hole.y-o.y)<850)wh.push([w.id,Math.round(w.hole.x),Math.round(w.hole.y),w.hole.r,+w.hole.a.toFixed(2)]);
@@ -296,7 +358,7 @@ let WD=0,wdc=0,WBK=null;
 const W={st:'idle',hp:0,mh:3000,t:0,el:0,wt:0,hole:{x:0,y:0,r:80,a:0},path:[],hx:0,hy:0,a:0,seg:[],ld:0,vis:0,idle:0,cdUntil:0,dead:0,tags:new Set()};
 const WNB=14,WSP=34,WBR=k=>1.25*(k===0?2:1.8-.7*(k-1)/(WNB-1));
 function wormReset(){W.tags.clear();zs=zs.filter(z=>!z.bs);W.st='idle';W.vis=0;W.seg=[];W.hole.a=0}
-function wormStart(){wormReset();for(const o of P.values())if(o.alive)W.tags.add(o.id);W.hp=W.mh=3000+400*[...P.values()].filter(o=>o.alive).length;W.st='sum';W.t=3;
+function wormStart(){wormReset();for(const o of P.values())if(o.alive)W.tags.add(o.id);W.hp=W.mh=2600+400*[...P.values()].filter(o=>o.alive).length;W.st='sum';W.t=3;
  for(let k=WNB;k>=0;k--){const z={id:zid++,x:-9999,y:-9999,hp:500,mh:500,sp:0,dm:0,sd:0,kd:k?10:9,rs:WBR(k),fz:0,sc:1,cd:0,a:0,ag:0,wt:0,wa:0,lost:0,lx:0,ly:0,lt:0,los:null,hit:0,pt:0,dir:true,bs:1};zs.push(z);W.seg[k]=z}
  bcast({t:'bm',k:'spawn'})}
 function wormHole(first){const al=[...P.values()].filter(o=>o.alive);let x=ALT.x,y=ALT.y;
@@ -333,7 +395,7 @@ function wormTick(dt){
   W.hx=nx;W.hy=ny;const q0=W.path[0];if(!q0||Math.hypot(q0.x-nx,q0.y-ny)>=6){W.path.unshift({x:nx,y:ny});if(W.path.length>130)W.path.pop()}
   wormPlace(Math.min(1,.3+W.el*1.6));
   if(W.el>.4)W.hole.a=Math.max(0,W.hole.a-dt*.9);
-  for(const o of al){if(o.wcd>0)continue;for(const z of W.seg){if(Math.hypot(o.x-z.x,o.y-z.y)<14*z.rs+10){o.wcd=.3;harm(o,30);const dx=o.x-z.x,dy=o.y-z.y,L=Math.hypot(dx,dy)||1;send(o,{t:'kb',x:Math.round(dx/L*520),y:Math.round(dy/L*520)});if(o.hp<=0)die(o);break}}}
+  for(const o of al){if(o.wcd>0)continue;for(const z of W.seg){if(Math.hypot(o.x-z.x,o.y-z.y)<14*z.rs+10){o.wcd=.3;harm(o,25);const dx=o.x-z.x,dy=o.y-z.y,L=Math.hypot(dx,dy)||1;send(o,{t:'kb',x:Math.round(dx/L*520),y:Math.round(dy/L*520)});if(o.hp<=0)die(o);break}}}
   for(const z of zs){if(z.bs||z.mw||z.dead)continue;if(z.wz>0){z.wz-=dt;continue}for(const s of W.seg){if(Math.hypot(z.x-s.x,z.y-s.y)<14*s.rs+8){z.wz=.35;z.hp-=70;z.hit=.1;if(z.hp<=0)z.dead=1;break}}}
   if(W.t<=0){W.st='dive';W.t=.9;W.hole.x=W.hx;W.hole.y=W.hy;W.hole.r=70;W.hole.a=1}
   return}
