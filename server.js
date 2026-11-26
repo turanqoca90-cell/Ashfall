@@ -221,7 +221,7 @@ function endLife(o){bikeLeave(o);o.life=false}
 /* armor: every vest level takes 12.5% off all damage */
 const harm=(o,d)=>{o.hp-=d*(1-.125*(o.ar||0))};
 function die(o){W.tags.delete(o.id);o.alive=false;o.hp=0;endLife(o);send(o,{t:'dead'})}
-function hurt(z,d,o){if(z.bs){wormHurt(z,d,o);return}if(z.mw){mwHurt(z,d,o);return}z.hp-=d;z.hit=.1;z.ag=1;if(z.kd===7)z.wk=1;z.lost=0;z.lx=o.x;z.ly=o.y;if(z.hp<=0&&!z.dead){z.dead=1;o.k++}}
+function hurt(z,d,o){if(z.nb){nbHurt(z,d,o);return}if(z.bs){wormHurt(z,d,o);return}if(z.mw){mwHurt(z,d,o);return}z.hp-=d;z.hit=.1;z.ag=1;if(z.kd===7)z.wk=1;z.lost=0;z.lx=o.x;z.ly=o.y;if(z.hp<=0&&!z.dead){z.dead=1;o.k++}}
 const bcast=m=>{for(const o of P.values())if(o.u)send(o,m)};
 const EXR=125,EXW=100;
 function explode(z){const x=z.x,y=z.y;
@@ -263,8 +263,9 @@ async function handle(o,m){
   for(const g of pr.gl){g.ttl=30;GI.push(g)}
   send(o,{t:'gi',g:pr.ng})}
  else if(m.t==='pick'){const i=GI.findIndex(g=>g.id===m.id);if(i<0)return;const g=GI[i];if(g.hold===o.id||Math.hypot(o.x-g.x,o.y-g.y)>45)return;GI.splice(i,1);send(o,{t:'got',it:{k:g.k,s:g.s,i:g.i||0,n:g.n||1}})}
- else if(m.t==='key'){const n=Date.now();if(!o.alive||n-(o.kt||0)<3000||Math.hypot(o.x-KS.x,o.y-KS.y)>130)return;o.kt=n;const r=WBS[5];
-  GI.push({id:gid++,x:KS.x-30,y:KS.y+34,k:'w',s:5,i:r[Math.random()*r.length|0],n:1,ttl:600,hold:0},{id:gid++,x:KS.x,y:KS.y+42,k:'a',s:5,i:0,n:1,ttl:600,hold:0},{id:gid++,x:KS.x+30,y:KS.y+34,k:'h',s:5,i:0,n:1,ttl:600,hold:0});bcast({t:'ks'})}
+ else if(m.t==='key'){const n=Date.now();if(!o.alive||n-(o.kt||0)<3000||Math.hypot(o.x-KS.x,o.y-KS.y)>130)return;o.kt=n;
+  if(NB.st!=='idle'||n<NB.cdUntil){send(o,{t:'got',it:{k:'y',s:3,i:0,n:1}});send(o,{t:'bm',k:'nwait'});return}
+  NB.st='sum';NB.t=4;bcast({t:'ks'})}
  else if(m.t==='altar'){if(o.alive&&W.st==='idle'&&Date.now()>=W.cdUntil&&Math.hypot(o.x-ALT.x,o.y-ALT.y)<130)wormStart()}
  else if(m.t==='swap'){const i=GI.findIndex(g=>g.id===m.id);if(i<0||!validItem(m.give))return;const g=GI[i];if(g.hold===o.id||Math.hypot(o.x-g.x,o.y-g.y)>45)return;GI.splice(i,1);GI.push({id:gid++,x:g.x,y:g.y,k:m.give.k,s:m.give.s,i:m.give.i,n:snn(m.give),ttl:30,hold:o.id});send(o,{t:'got',it:{k:g.k,s:g.s,i:g.i||0,n:g.n||1},sw:1})}
  else if(m.t==='drop'){if(!validItem(m)||GI.length>400)return;GI.push({id:gid++,x:o.x+Math.cos(o.a)*26,y:o.y+Math.sin(o.a)*26,k:m.k,s:m.s,i:m.i,n:snn(m),ttl:30,hold:o.id})}
@@ -305,6 +306,52 @@ function hunterTick(dt,al){for(const h of HT){const z=h.z;
   push(z,12);
   if(z.los&&dd<340&&z.cd<=0){z.cd=1.5+Math.random()*.4;z.fz=.2;const a=z.a;noise(z.x,z.y);
    for(let i=0;i<7;i++){const q=a+(Math.random()-.5)*.3,v=520+Math.random()*80;spits.push({id:sid++,x:z.x+Math.cos(a)*24,y:z.y+Math.sin(a)*24,vx:Math.cos(q)*v,vy:Math.sin(q)*v,l:.55,d:6,pl:1})}}}}
+/* NURLAN (kd 14): shrine boss. Key on the shrine -> 4 s shrine shine (NB.st 'sum') -> he spawns beside it. One entry in zs (nb:1).
+   z.fz carries his pose to the client: 0 walk, 1 dash wind-up, 2 dashing, 3 spin wind-up, 4 spinning, 5 spitting.
+   States: walk, dwind, dash, swind, spin, spit. DZ = spit danger circles. Leash 900 px around the shrine. 120 s cooldown after death (key is refunded if used early). */
+const NB={st:'idle',t:0,z:null,cdUntil:0,lt:0,away:0,cc:0,tg:null,dir:0,hit:null,sk:0},DZ=[];
+function nbReset(){if(NB.z){const i=zs.indexOf(NB.z);if(i>=0)zs.splice(i,1)}NB.z=null;NB.st='idle';NB.tg=null;DZ.length=0}
+function nbSpawn(){let x=KS.x,y=KS.y+130,ok=false;for(let r=130;r<420&&!ok;r+=40)for(let i=0;i<12&&!ok;i++){const a=Math.PI/2+i/12*TAU;x=KS.x+Math.cos(a)*r;y=KS.y+Math.sin(a)*r;ok=x>80&&y>80&&x<WS-80&&y<WS-80&&!inWall(x,y,60)}
+ const n=Math.max(1,[...P.values()].filter(o=>o.alive&&Math.hypot(o.x-KS.x,o.y-KS.y)<1100).length),hp=3000+600*(n-1);
+ NB.z={id:zid++,x,y,hp,mh:hp,sp:115,dm:0,sd:0,kd:14,rs:3.8,fz:0,sc:1,cd:1.5,a:Math.PI/2,ag:1,wt:0,wa:0,lost:0,lx:0,ly:0,lt:0,los:null,hit:0,pt:0,dir:true,nb:1};
+ zs.push(NB.z);NB.st='walk';NB.t=0;NB.cc=0;NB.away=0;NB.tg=null;bcast({t:'bm',k:'nspawn'})}
+function nbHurt(z,d,o){if(z.dead)return;z.hp-=d;z.hit=.1;if(z.hp<=0){z.dead=1;if(o&&o.k!==undefined)o.k++}}
+function nbHit(o,d,from,force){harm(o,d);const dx=o.x-from.x,dy=o.y-from.y,L=Math.hypot(dx,dy)||1;if(force)send(o,{t:'kb',x:Math.round(dx/L*force),y:Math.round(dy/L*force)});if(o.hp<=0)die(o)}
+function nbMove(z,a,v){const x=z.x+Math.cos(a)*v,y=z.y+Math.sin(a)*v;if(inWall(x,y,40)||x<60||y<60||x>WS-60||y>WS-60||Math.hypot(x-KS.x,y-KS.y)>900)return false;z.x=x;z.y=y;return true}
+function nbShove(q,from,dist,dmg){if(q.nb||q.bs||q.mw||q.hn||q.dead)return;const dx=q.x-from.x,dy=q.y-from.y,L=Math.hypot(dx,dy)||1;for(let k=4;k>=1;k--){const x=q.x+dx/L*dist*k/4,y=q.y+dy/L*dist*k/4;if(!inWall(x,y,10)){q.x=x;q.y=y;break}}q.hp-=dmg;q.hit=.1;if(q.hp<=0)q.dead=1}
+function nbDZ(o){return DZ.filter(q=>Math.abs(q.x-o.x)<900&&Math.abs(q.y-o.y)<900).map(q=>[Math.round(q.x),Math.round(q.y),q.r,Math.round(q.t/q.m*100)])}
+function nbTick(dt,al){
+ if(NB.st==='idle')return;
+ if(NB.st==='sum'){if((NB.t-=dt)<=0)nbSpawn();return}
+ const z=NB.z;if(!z){NB.st='idle';return}
+ for(let i=DZ.length-1;i>=0;i--){const q=DZ[i];q.t-=dt;if(q.t<=0){for(const o of al)if(o.alive&&Math.hypot(o.x-q.x,o.y-q.y)<q.r+8)nbHit(o,26,q,0);evs.push([Math.round(q.x),Math.round(q.y),50]);DZ.splice(i,1)}}
+ if(z.dead){DIED.push(z.id);evs.push([Math.round(z.x),Math.round(z.y)]);const r=WBS[5];
+  GI.push({id:gid++,x:KS.x-30,y:KS.y+34,k:'w',s:5,i:r[Math.random()*r.length|0],n:1,ttl:600,hold:0},{id:gid++,x:KS.x,y:KS.y+42,k:'a',s:5,i:0,n:1,ttl:600,hold:0},{id:gid++,x:KS.x+30,y:KS.y+34,k:'h',s:5,i:0,n:1,ttl:600,hold:0});
+  nbReset();NB.cdUntil=Date.now()+120000;bcast({t:'bm',k:'ndead'});return}
+ z.hit-=dt;z.cd-=dt;NB.t-=dt;NB.cc-=dt;
+ NB.lt-=dt;if(NB.lt<=0){NB.lt=.3;let b=null,bd=1e9;for(const o of al){if(!o.alive||o.inv>Date.now())continue;const d=Math.hypot(o.x-z.x,o.y-z.y);if(d<bd){bd=d;b=o}}NB.tg=b&&bd<1500?b:null}
+ const tg=NB.tg&&NB.tg.alive?NB.tg:null;
+ if(!tg){NB.away+=dt;if(NB.away>20){nbReset();bcast({t:'bm',k:'nleave'});return}}else NB.away=0;
+ const d=tg?Math.hypot(tg.x-z.x,tg.y-z.y):0,toT=tg?Math.atan2(tg.y-z.y,tg.x-z.x):z.a,st=NB.st;z.ag=tg?1:0;
+ const turn=(a,r)=>{let df=Math.atan2(Math.sin(a-z.a),Math.cos(a-z.a));z.a+=Math.max(-r*dt,Math.min(r*dt,df))};
+ if(st!=='dash'&&st!=='spin'&&NB.cc<=0)for(const o of al)if(o.alive&&Math.hypot(o.x-z.x,o.y-z.y)<14*z.rs+16){NB.cc=.9;nbHit(o,28,z,300);break}
+ if(st==='walk'){z.fz=0;
+  if(tg){turn(toT,6);if(d>90){let ma=toT;if(!los(z.x,z.y,tg.x,tg.y)){const s=stepDir(z,tg.x,tg.y);if(s)ma=Math.atan2(s[1],s[0])}nbMove(z,ma,z.sp*dt)}
+   if(z.cd<=0){const op=[],lo=d<800&&los(z.x,z.y,tg.x,tg.y);if(d<240)op.push('swind','swind');if(d>160&&d<700&&lo)op.push('dwind','dwind');if(d<800)op.push('spit');
+    if(op.length){const c=op[Math.random()*op.length|0];NB.st=c;
+     if(c==='dwind')NB.t=.9;else if(c==='swind')NB.t=.8;
+     else{NB.t=.9;const n=[...al].filter(o=>o.alive&&Math.hypot(o.x-z.x,o.y-z.y)<900);for(const o of n){if(DZ.length>=12)break;DZ.push({x:o.x,y:o.y,r:58,t:1.4,m:1.4});for(let k=0;k<3&&DZ.length<12;k++){const a=Math.random()*TAU,r=60+Math.random()*190;DZ.push({x:o.x+Math.cos(a)*r,y:o.y+Math.sin(a)*r,r:58,t:1.4+k*.15,m:1.4+k*.15})}}}}}}}
+ else if(st==='dwind'){z.fz=1;if(tg)turn(toT,2.5);if(NB.t<=0){NB.dir=z.a;NB.t=.55;NB.hit=new Set();NB.st='dash'}}
+ else if(st==='dash'){z.fz=2;const ok=nbMove(z,NB.dir,760*dt);
+  for(const o of al)if(o.alive&&!NB.hit.has(o.id)&&Math.hypot(o.x-z.x,o.y-z.y)<14*z.rs+14){NB.hit.add(o.id);nbHit(o,45,z,420)}
+  for(const q of zs)if(Math.hypot(q.x-z.x,q.y-z.y)<14*z.rs+10)nbShove(q,z,120,20);
+  if(!ok||NB.t<=0){NB.st='walk';z.cd=2}}
+ else if(st==='swind'){z.fz=3;if(tg)turn(toT,3);if(NB.t<=0){NB.st='spin';NB.t=1.7;NB.sk=0}}
+ else if(st==='spin'){z.fz=4;if(tg)nbMove(z,toT,70*dt);NB.sk-=dt;
+  if(NB.sk<=0){NB.sk=.35;for(const o of al)if(o.alive&&Math.hypot(o.x-z.x,o.y-z.y)<200)nbHit(o,18,z,380);for(const q of zs)if(Math.hypot(q.x-z.x,q.y-z.y)<200)nbShove(q,z,170,25)}
+  if(NB.t<=0){NB.st='walk';z.cd=1.8}}
+ else if(st==='spit'){z.fz=5;if(tg)turn(toT,4);if(NB.t<=0){NB.st='walk';z.cd=1.6}}
+}
 function tick(){const dt=.05,al=[...P.values()].filter(o=>o.alive);bikeTick();
  fbud=2;if(FC.size>50){const n=Date.now();for(const[k,f]of FC)if(n-f.t>1500)FC.delete(k)}
  if(DW.size&&(rst-=dt)<=0){rst=1;const now=Date.now(),r=[];for(const[id,t]of DW)if(now-t>240000){r.push(id);DW.delete(id);const q=walls[id];wallSet(q,true);reblk(q)}if(r.length){FC.clear();bcast({t:'wl',r})}}
@@ -317,13 +364,13 @@ function tick(){const dt=.05,al=[...P.values()].filter(o=>o.alive);bikeTick();
  for(let i=spits.length-1;i>=0;i--){const q=spits[i];let dead=false;for(let k=0;k<4&&!dead;k++){q.x+=q.vx*dt/4;q.y+=q.vy*dt/4;if(inWall(q.x,q.y)){dead=true;break}for(const o of al){if(o.alive&&Math.hypot(o.x-q.x,o.y-q.y)<16){harm(o,q.d);if(o.hp<=0)die(o);dead=true;break}}}q.l-=dt;if(dead||q.l<=0)spits.splice(i,1)}
  for(let i=nades.length-1;i>=0;i--){const g=nades[i];if(g.tl>0){g.tl-=dt;const nx=g.x+g.vx*dt,ny=g.y+g.vy*dt;if(inWall(nx,ny,4))g.tl=0;else{g.x=nx;g.y=ny}}else if(g.ty>=2){if(!g.on){g.on=1;g.ttl=g.ty===2?8:g.ty===3?10:g.ty===5?30:5;g.bt=0}g.ttl-=dt;g.fz=g.ttl;if(g.ty===5)turretTick(g,dt);if(g.ty===4){g.bt-=dt;if(g.bt<=0){g.bt=.25;const ow=P.get(g.oid)||{x:g.x,y:g.y,k:0};for(const q of zs)if(!q.dead&&Math.hypot(q.x-g.x,q.y-g.y)<70)hurt(q,7,ow)}}if(g.ttl<=0)nades.splice(i,1)}else if(g.ty===1){g.ttl-=dt;let hit=false;for(const q of zs)if(!q.dead&&Math.hypot(q.x-g.x,q.y-g.y)<22){hit=true;break}if(hit){mineBlast(g.x,g.y,P.get(g.oid)||{x:g.x,y:g.y,k:0});nades.splice(i,1)}else if(g.ttl<=0)nades.splice(i,1)}else{g.fz-=dt;if(g.fz<=0){blast(g.x,g.y,P.get(g.oid)||{x:g.x,y:g.y,k:0});nades.splice(i,1)}}}
  SM=nades.filter(g=>g.ty===2&&g.on);LUS=nades.filter(g=>g.ty===3&&g.on);
- wormTick(dt);mwTick(dt);hunterTick(dt,al);spT+=dt;
- if(spT>.5){spT=0;if(W.st!=='idle')for(let i=zs.length-1;i>=0;i--){const z=zs[i];if(z.bs||z.mw||z.dead)continue;for(const o of al)if(Math.hypot(z.x-o.x,z.y-o.y)<1100){DIED.push(z.id);zs.splice(i,1);break}}
- if(W.st==='idle')for(const o of al){if(zs.length>=160)break;let n=0;for(const z of zs)if(!z.bs&&!z.mw&&!z.hn&&Math.hypot(z.x-o.x,z.y-o.y)<850)n++;n+=mwNear(o.x,o.y,850);
+ wormTick(dt);mwTick(dt);hunterTick(dt,al);nbTick(dt,al);spT+=dt;
+ if(spT>.5){spT=0;if(W.st!=='idle')for(let i=zs.length-1;i>=0;i--){const z=zs[i];if(z.bs||z.mw||z.nb||z.dead)continue;for(const o of al)if(Math.hypot(z.x-o.x,z.y-o.y)<1100){DIED.push(z.id);zs.splice(i,1);break}}
+ if(W.st==='idle')for(const o of al){if(zs.length>=160)break;let n=0;for(const z of zs)if(!z.bs&&!z.mw&&!z.hn&&!z.nb&&Math.hypot(z.x-o.x,z.y-o.y)<850)n++;n+=mwNear(o.x,o.y,850);
   if(n<10+3*zoneAt(o.x,o.y)){const a=Math.random()*TAU,d=620+Math.random()*180,x=o.x+Math.cos(a)*d,y=o.y+Math.sin(a)*d;
    if(x>20&&y>20&&x<WS-20&&y<WS-20&&!inWall(x,y,16)){let k=mkZ(zoneAt(x,y));if(k.kd===11){if(mwNear(o.x,o.y,900)<2){mwSpawn(x,y,k.hp);continue}k={kd:5,rs:1,hp:k.hp*.5,sp:k.sp,dm:k.dm}}zs.push({id:zid++,x,y,hp:k.hp,mh:k.hp,sp:k.sp,dm:k.dm,sd:k.sd||0,kd:k.kd,rs:k.rs,fz:0,sc:1+Math.random()*1.5,cd:0,a:0,ag:0,wt:0,wa:0,lost:0,lx:0,ly:0,lt:0,los:null,hit:0,pt:0,dir:true})}}}}
  for(let i=zs.length-1;i>=0;i--){const z=zs[i];
-  if(z.bs||z.mw||z.hn)continue;
+  if(z.bs||z.mw||z.hn||z.nb)continue;
   if(z.dead){DIED.push(z.id);zs.splice(i,1);continue}
   let tp=null,td=1e9;for(const o of al){const d=Math.hypot(o.x-z.x,o.y-z.y);if(d<td){td=d;tp=o}}
   if(!tp||td>1100){zs.splice(i,1);continue}
@@ -351,7 +398,7 @@ function tick(){const dt=.05,al=[...P.values()].filter(o=>o.alive);bikeTick();
   const ex=evs.filter(e=>Math.abs(e[0]-o.x)<1300&&Math.abs(e[1]-o.y)<1300);
   const ng=[];for(const g of nades)if(Math.abs(g.x-o.x)<850&&Math.abs(g.y-o.y)<850)ng.push([g.id,Math.round(g.x),Math.round(g.y),g.tl>0?0:1,Math.max(0,Math.round(g.fz*10)),g.cid,g.oid===o.id?1:0,g.ty||0,Math.round((g.ta||0)*100),g.sc|0]);
   const wh=[];if(o.alive)for(const w of MW)if(w.hole.a>0&&Math.abs(w.hole.x-o.x)<850&&Math.abs(w.hole.y-o.y)<850)wh.push([w.id,Math.round(w.hole.x),Math.round(w.hole.y),w.hole.r,+w.hole.a.toFixed(2)]);
-  send(o,{t:'s',dd:DIED,wh,i:o.id,me:{hp:Math.ceil(o.hp),k:o.k},p:pl,z,gi,c:cs,sp,ex,ng,bk:BKS(o),ad:Math.max(0,Math.ceil((W.cdUntil-Date.now())/1000)),bt:bt,bs:W.st==='idle'?0:[W.st==='sum'?1:2,Math.round(W.hp),W.mh,Math.round(W.hole.x),Math.round(W.hole.y),W.hole.r,+W.hole.a.toFixed(2)]})}evs.length=0;DIED.length=0}
+  send(o,{t:'s',dz:nbDZ(o),nb:NB.st==='idle'?0:1,dd:DIED,wh,i:o.id,me:{hp:Math.ceil(o.hp),k:o.k},p:pl,z,gi,c:cs,sp,ex,ng,bk:BKS(o),ad:Math.max(0,Math.ceil((W.cdUntil-Date.now())/1000)),bt:bt,bs:W.st==='idle'?0:[W.st==='sum'?1:2,Math.round(W.hp),W.mh,Math.round(W.hole.x),Math.round(W.hole.y),W.hole.r,+W.hole.a.toFixed(2)]})}evs.length=0;DIED.length=0}
 
 
 let WD=0,wdc=0,WBK=null;
@@ -396,7 +443,7 @@ function wormTick(dt){
   wormPlace(Math.min(1,.3+W.el*1.6));
   if(W.el>.4)W.hole.a=Math.max(0,W.hole.a-dt*.9);
   for(const o of al){if(o.wcd>0)continue;for(const z of W.seg){if(Math.hypot(o.x-z.x,o.y-z.y)<14*z.rs+10){o.wcd=.3;harm(o,25);const dx=o.x-z.x,dy=o.y-z.y,L=Math.hypot(dx,dy)||1;send(o,{t:'kb',x:Math.round(dx/L*520),y:Math.round(dy/L*520)});if(o.hp<=0)die(o);break}}}
-  for(const z of zs){if(z.bs||z.mw||z.dead)continue;if(z.wz>0){z.wz-=dt;continue}for(const s of W.seg){if(Math.hypot(z.x-s.x,z.y-s.y)<14*s.rs+8){z.wz=.35;z.hp-=70;z.hit=.1;if(z.hp<=0)z.dead=1;break}}}
+  for(const z of zs){if(z.bs||z.mw||z.nb||z.dead)continue;if(z.wz>0){z.wz-=dt;continue}for(const s of W.seg){if(Math.hypot(z.x-s.x,z.y-s.y)<14*s.rs+8){z.wz=.35;z.hp-=70;z.hit=.1;if(z.hp<=0)z.dead=1;break}}}
   if(W.t<=0){W.st='dive';W.t=.9;W.hole.x=W.hx;W.hole.y=W.hy;W.hole.r=70;W.hole.a=1}
   return}
  if(W.st==='dive'){W.t-=dt;wormPlace(Math.max(0,W.t/.9));if(W.t<=0){for(const z of W.seg)z.x=z.y=-9999;W.vis=0;W.st='under';W.t=1+Math.random()*.8}}
@@ -441,7 +488,8 @@ const BOOT=Date.now().toString(36);
 process.on('uncaughtException',e=>console.error('uncaught',e));process.on('unhandledRejection',e=>console.error('unhandled',e));
 const server=http.createServer((req,res)=>{
  if(req.url==='/status'){let a=0;for(const o of P.values())if(o.alive)a++;res.writeHead(200,{'Content-Type':'application/json','Cache-Control':'no-store'});res.end(JSON.stringify({server:BOOT,uptimeSec:Math.round(process.uptime()),connected:P.size,alive:a,zombies:zs.length,memMB:Math.round(process.memoryUsage().rss/1048576)}));return}
- if(req.url==='/face.webp'){try{const b=fs.readFileSync(path.join(__dirname,'face.webp'));res.writeHead(200,{'Content-Type':'image/webp','Cache-Control':'public, max-age=3600'});res.end(b)}catch(e){res.writeHead(404);res.end('Not found')}return}
+ if(req.url==='/boss_face.webp'){try{const b=fs.readFileSync(path.join(__dirname,'boss_face.webp'));res.writeHead(200,{'Content-Type':'image/webp','Cache-Control':'public, max-age=3600'});res.end(b)}catch(e){res.writeHead(404);res.end('Not found')}return}
+  if(req.url==='/face.webp'){try{const b=fs.readFileSync(path.join(__dirname,'face.webp'));res.writeHead(200,{'Content-Type':'image/webp','Cache-Control':'public, max-age=3600'});res.end(b)}catch(e){res.writeHead(404);res.end('Not found')}return}
  if(req.url==='/'||req.url.startsWith('/?')||req.url==='/index.html'){res.writeHead(200,{'Content-Type':'text/html; charset=utf-8'});res.end(fs.readFileSync(path.join(__dirname,'index.html')))}
  else{res.writeHead(404);res.end('Not found')}});
 const wss=new WebSocketServer({server});
