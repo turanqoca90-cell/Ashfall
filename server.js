@@ -398,7 +398,7 @@ function tick(){const dt=.05,al=[...P.values()].filter(o=>o.alive);bikeTick();
   const ex=evs.filter(e=>Math.abs(e[0]-o.x)<1300&&Math.abs(e[1]-o.y)<1300);
   const ng=[];for(const g of nades)if(Math.abs(g.x-o.x)<850&&Math.abs(g.y-o.y)<850)ng.push([g.id,Math.round(g.x),Math.round(g.y),g.tl>0?0:1,Math.max(0,Math.round(g.fz*10)),g.cid,g.oid===o.id?1:0,g.ty||0,Math.round((g.ta||0)*100),g.sc|0]);
   const wh=[];if(o.alive)for(const w of MW)if(w.hole.a>0&&Math.abs(w.hole.x-o.x)<850&&Math.abs(w.hole.y-o.y)<850)wh.push([w.id,Math.round(w.hole.x),Math.round(w.hole.y),w.hole.r,+w.hole.a.toFixed(2)]);
-  send(o,{t:'s',dz:nbDZ(o),nb:NB.st==='idle'?0:1,dd:DIED,wh,i:o.id,me:{hp:Math.ceil(o.hp),k:o.k},p:pl,z,gi,c:cs,sp,ex,ng,bk:BKS(o),ad:Math.max(0,Math.ceil((W.cdUntil-Date.now())/1000)),bt:bt,bs:W.st==='idle'?0:[W.st==='sum'?1:2,Math.round(W.hp),W.mh,Math.round(W.hole.x),Math.round(W.hole.y),W.hole.r,+W.hole.a.toFixed(2)]})}evs.length=0;DIED.length=0}
+  send(o,{t:'s',hm:HT.filter(h=>h.z&&!h.z.dead&&h.z.hp>0).map(h=>[Math.round(h.z.x),Math.round(h.z.y)]),dz:nbDZ(o),nb:NB.st==='idle'?0:1,dd:DIED,wh,i:o.id,me:{hp:Math.ceil(o.hp),k:o.k},p:pl,z,gi,c:cs,sp,ex,ng,bk:BKS(o),ad:Math.max(0,Math.ceil((W.cdUntil-Date.now())/1000)),bt:bt,bs:W.st==='idle'?0:[W.st==='sum'?1:2,Math.round(W.hp),W.mh,Math.round(W.hole.x),Math.round(W.hole.y),W.hole.r,+W.hole.a.toFixed(2)]})}evs.length=0;DIED.length=0}
 
 
 let WD=0,wdc=0,WBK=null;
