@@ -31,7 +31,7 @@ function rideMove(dt,mx,my,m){p.kt=0;p.hid=false;p.sp=0;if(!RD)return;
  const b=MB;if(!b)return;
  if(m>.15){const want=Math.atan2(my,mx),da=Math.atan2(Math.sin(want-b.a),Math.cos(want-b.a)),tr=(2.6+Math.max(0,1-b.v/380)*2.2)*dt;b.a+=Math.max(-tr,Math.min(tr,da));
   if(Math.abs(da)>1.7)b.v=Math.max(0,b.v-520*dt);else b.v=Math.min(380,b.v+280*m*dt)}else b.v=Math.max(0,b.v-320*dt);
- const ox=b.x,oy=b.y;p.x=b.x+Math.cos(b.a)*b.v*dt;p.y=b.y+Math.sin(b.a)*b.v*dt;push(p,15);
+ const ox=b.x,oy=b.y;p.x=b.x+Math.cos(b.a)*b.v*dt;p.y=b.y+Math.sin(b.a)*b.v*dt;push(p,15);shopBlock(p,15);
  const mv=Math.hypot(p.x-ox,p.y-oy),ex=b.v*dt;if(ex>.5&&mv<ex*.6)b.v*=Math.max(.2,1-dt*14);
  b.x=p.x;b.y=p.y;p.a=b.a;p.wk=(p.wk||0)}
 function drawBikes(){const t=performance.now()/1000,PAL=['#c8483a','#2f6fb5','#d49a2a','#3a8a4a'];for(const g of BKL){ctx.save();ctx.translate(g.x,g.y);ctx.fillStyle='rgba(0,0,0,.25)';ctx.beginPath();ctx.ellipse(2,5,34,11,g.a,0,TAU);ctx.fill();ctx.rotate(g.a);ctx.scale(1.35,1.35);ctx.lineJoin='round';ctx.lineWidth=2;ctx.strokeStyle=OL;
@@ -96,7 +96,7 @@ function update(dt){
  life+=dt;gro-=dt;p.rev=(p.rev||0)-dt;p.hid=p.rev<=0&&trees.some(t=>Math.hypot(p.x-t[0],p.y-t[1])<t[2]-6);let[mx,my,mm_]=vec('l');
  const kx=(K.KeyD||K.ArrowRight?1:0)-(K.KeyA||K.ArrowLeft?1:0),ky=(K.KeyS||K.ArrowDown?1:0)-(K.KeyW||K.ArrowUp?1:0);
  if(kx||ky){const l=Math.hypot(kx,ky);mx=kx/l;my=ky/l;mm_=1}
- const sm=(performance.now()<buff.spd?1.3:1)*(performance.now()<buff.slow?.9:1)*(1+.125*(p.shoes?p.shoes.s-1:0));if(RD){rideMove(dt,mx,my,mm_);mm_=0}else{p.x+=mx*150*mm_*dt*sm;p.y+=my*150*mm_*dt*sm;if(p.kt>0){p.kt-=dt;p.x+=p.kx*dt;p.y+=p.ky*dt}push(p,12)}p.sp=mm_;p.wk=(p.wk||0)+mm_*dt*11;
+ const sm=(performance.now()<buff.spd?1.3:1)*(performance.now()<buff.slow?.9:1)*(1+.125*(p.shoes?p.shoes.s-1:0));if(RD){rideMove(dt,mx,my,mm_);mm_=0}else{p.x+=mx*150*mm_*dt*sm;p.y+=my*150*mm_*dt*sm;if(p.kt>0){p.kt-=dt;p.x+=p.kx*dt;p.y+=p.ky*dt}push(p,12);shopBlock(p,12)}p.sp=mm_;p.wk=(p.wk||0)+mm_*dt*11;
  if(mm_>.15){p.sd=(p.sd||0)+mm_*150*dt;if(p.sd>22){p.sd=0;p.fs=-(p.fs||1);snd('n',450+Math.random()*250,0,.035,p.hid?.03:.07);const fa=Math.atan2(my,mx);fps.push({x:p.x-Math.sin(fa)*6*p.fs,y:p.y+Math.cos(fa)*6*p.fs,a:fa,t:6,m:6,z:0})}}
  const[ax,ay,am]=vec('r');let fire=false;
  if(am>.25){p.a=Math.atan2(ay,ax);fire=true}else if(mm_>.1)p.a=Math.atan2(my,mx);
